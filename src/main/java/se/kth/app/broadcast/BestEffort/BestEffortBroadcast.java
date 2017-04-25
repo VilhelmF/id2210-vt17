@@ -7,7 +7,7 @@ import se.sics.kompics.PortType;
  */
 public class BestEffortBroadcast extends PortType {
     {
-        request(BEB_Broadcast.class);
-        indication(BEB_Deliver.class);
+        request(GBEB_Broadcast.class);
+        indication(GBEB_Deliver.class);
     }
 }

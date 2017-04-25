@@ -1,4 +1,4 @@
-package se.kth.app.broadcast;
+package se.kth.app.broadcast.Causal;
 
 import se.sics.kompics.ComponentDefinition;
 

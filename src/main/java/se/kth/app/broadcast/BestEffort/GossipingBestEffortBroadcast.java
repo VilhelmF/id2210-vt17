@@ -8,6 +8,7 @@ import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
+import sun.nio.ch.Net;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -30,11 +31,13 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     //***** Fields *******
     private HashMap<NetAddress, KompicsEvent> past;
     private HashMap<NetAddress, KompicsEvent> unseen;
+    private NetAddress self;
 
 
     public GossipingBestEffortBroadcast(Init init) {
         this.past = init.past;
         this.unseen = init.unseen;
+        this.self = init.self;
     }
 
     //***** Handlers *******
@@ -55,10 +58,15 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     protected final ClassMatchedHandler<BEB_Deliver, Message> bebDeliverHandler = new ClassMatchedHandler<BEB_Deliver, Message>() {
         @Override
         public void handle(BEB_Deliver beb_deliver, Message message) {
-            past.put(message.getSource(), beb_deliver.payload);
+            if (message.payload instanceof HistoryRequest) {
+                trigger(new Message(self, message.getSource(), new HistoryResponse(past)), net);
+            } else if (message.payload instanceof HistoryResponse) {
+                HistoryResponse response = (HistoryResponse) message.payload;
+
+
+            }
         }
     };
-
 
     {
         subscribe(broadcastHandler, beb);
@@ -69,7 +77,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     public static class Init extends se.sics.kompics.Init<GossipingBestEffortBroadcast> {
         private HashMap<NetAddress, KompicsEvent> past;
         private HashMap<NetAddress, KompicsEvent> unseen;
-        private NetAddress src;
+        private NetAddress self;
 
         public Init() {
             this.past = new HashMap<>();

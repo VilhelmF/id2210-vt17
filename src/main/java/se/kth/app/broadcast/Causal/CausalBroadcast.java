@@ -1,9 +1,13 @@
 package se.kth.app.broadcast.Causal;
 
-import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.PortType;
 
 /**
- * Created by sindrikaldal on 24/04/17.
+ * Created by sindrikaldal on 25/04/17.
  */
-public class CausalBroadcast extends ComponentDefinition {
+public class CausalBroadcast extends PortType{
+    {
+        request(CRB_Broadcast.class);
+        indication(CRB_Deliver.class);
+    }
 }

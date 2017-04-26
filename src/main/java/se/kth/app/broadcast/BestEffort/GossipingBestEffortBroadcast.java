@@ -2,19 +2,17 @@ package se.kth.app.broadcast.BestEffort;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.croupier.util.CroupierHelper;
+import se.kth.networking.CroupierMessage;
 import se.kth.networking.Message;
 import se.kth.networking.NetAddress;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
-import se.sics.ktoolbox.util.network.KAddress;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * Created by sindrikaldal on 24/04/17.
@@ -33,10 +31,10 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     private NetAddress self;
 
 
-    public GossipingBestEffortBroadcast(Init init) {
+    /*public GossipingBestEffortBroadcast(Init init) {
         this.past = init.past;
         this.self = init.self;
-    }
+    }*/
 
     //***** Handlers *******
     protected final Handler<GBEB_Broadcast> broadcastHandler = new Handler<GBEB_Broadcast>() {
@@ -46,16 +44,19 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
         }
     };
 
-    protected final Handler<CroupierSample> sampleHandler = new Handler<CroupierSample>() {
+    protected final Handler<CroupierMessage> sampleHandler = new Handler<CroupierMessage>() {
         @Override
-        public void handle(CroupierSample croupierSample) {
+        public void handle(CroupierMessage croupierMessage) {
+            CroupierSample croupierSample = croupierMessage.croupierSample;
+            System.out.println("Received a croupier sample.");
             if (croupierSample.publicSample.isEmpty()) {
                 return;
             }
+            /*
             List<KAddress> sample = CroupierHelper.getSample(croupierSample);
             for (KAddress peer : sample) {
                 trigger(new Message(self, new NetAddress(peer.getIp(), peer.getPort()), new OriginatedData(null, new HistoryRequest())), net);
-            }
+            }*/
         }
     };
 
@@ -84,12 +85,6 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
         return unseen;
     }
 
-    {
-        subscribe(broadcastHandler, gbeb);
-        subscribe(sampleHandler, ps);
-        subscribe(bebDeliverHandler, net);
-    }
-
     public static class Init extends se.sics.kompics.Init<GossipingBestEffortBroadcast> {
         private HashMap<NetAddress, KompicsEvent> past;
         private NetAddress self;
@@ -103,6 +98,12 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
             }
         }
 
+    }
+
+    {
+        subscribe(broadcastHandler, gbeb);
+        subscribe(sampleHandler, gbeb);
+        subscribe(bebDeliverHandler, net);
     }
 
 }

@@ -20,12 +20,7 @@ package se.kth.system;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.mngr.AppMngrComp;
-import se.sics.kompics.Channel;
-import se.sics.kompics.Component;
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Handler;
-import se.sics.kompics.Positive;
-import se.sics.kompics.Start;
+import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.cc.heartbeat.CCHeartbeatPort;
@@ -49,6 +44,7 @@ public class HostMngrComp extends ComponentDefinition {
     //*****************************CONNECTIONS**********************************
     Positive<Timer> timerPort = requires(Timer.class);
     Positive<Network> networkPort = requires(Network.class);
+    //protected final Component basicbroadcast = create(GossipingBestEffortBroadcast.class, Init.NONE);
     //***************************EXTERNAL_STATE*********************************
     private KAddress selfAdr;
     private KAddress bootstrapServer;
@@ -100,6 +96,7 @@ public class HostMngrComp extends ComponentDefinition {
                 overlayMngrComp.getPositive(CroupierPort.class), overlayMngrComp.getNegative(OverlayViewUpdatePort.class));
         appMngrComp = create(AppMngrComp.class, new AppMngrComp.Init(extPorts, selfAdr, croupierId));
         connect(appMngrComp.getNegative(OverlayMngrPort.class), overlayMngrComp.getPositive(OverlayMngrPort.class), Channel.TWO_WAY);
+        //connect(basicbroadcast.getPositive(BestEffortBroadcast.class), appComp.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
     }
 
     public static class Init extends se.sics.kompics.Init<HostMngrComp> {

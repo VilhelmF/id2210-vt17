@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.AppComp;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
+import se.kth.app.broadcast.BestEffort.GossipingBestEffortBroadcast;
 import se.kth.croupier.util.NoView;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
@@ -89,12 +90,13 @@ public class AppMngrComp extends ComponentDefinition {
 
   private void connectAppComp() {
     appComp = create(AppComp.class, new AppComp.Init(selfAdr, croupierId));
-    //gossipingBestEffortBroadcast = create(GossipingBestEffortBroadcast.class, se.sics.kompics.Init.NONE);
+    gossipingBestEffortBroadcast = create(GossipingBestEffortBroadcast.class, se.sics.kompics.Init.NONE);
 
     connect(appComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
     connect(appComp.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
     connect(appComp.getNegative(CroupierPort.class), extPorts.croupierPort, Channel.TWO_WAY);
-    connect(gbeb, appComp.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
+    connect(appComp.getNegative(BestEffortBroadcast.class), gbeb, Channel.TWO_WAY);
+    //connect(gbeb, appComp.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
     //connect(gossipingBestEffortBroadcast.getPositive(BestEffortBroadcast.class), appComp.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
   }
 

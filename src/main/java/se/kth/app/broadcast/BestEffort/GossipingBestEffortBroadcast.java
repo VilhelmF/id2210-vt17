@@ -4,8 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.croupier.util.CroupierHelper;
 import se.kth.networking.CroupierMessage;
-import se.kth.networking.Message;
-import se.kth.networking.NetAddress;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
@@ -17,9 +15,8 @@ import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by sindrikaldal on 24/04/17.
@@ -65,18 +62,16 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
         public void handle(CroupierMessage croupierMessage) {
             CroupierSample croupierSample = croupierMessage.croupierSample;
 
-            System.out.println("Received a croupier sample.");
             if (croupierSample.publicSample.isEmpty()) {
                 return;
             }
-            /*
             List<KAddress> sample = CroupierHelper.getSample(croupierSample);
             for (KAddress peer : sample) {
                 KHeader header = new BasicHeader(self, peer, Transport.TCP);
                 KContentMsg msg = new BasicContentMsg(header, new HistoryRequest());
                 trigger(msg, net);
+                LOG.info("{ } Gossiping component : " + self.getIp() + " sent weird message to " + peer.getIp());
             }
-            */
         }
     };
 
@@ -100,6 +95,8 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
                 trigger(new GBEB_Deliver(key, unseen.get(key)), gbeb);
             }
             past.putAll(unseen);
+            LOG.info("{ } Gossiping component : " + self.getIp() + " received the history response from "
+                    + container.getSource());
         }
     };
 

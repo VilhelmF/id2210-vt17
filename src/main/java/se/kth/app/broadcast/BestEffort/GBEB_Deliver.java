@@ -1,6 +1,7 @@
 package se.kth.app.broadcast.BestEffort;
 
 import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.network.KAddress;
 
 import java.io.Serializable;
 
@@ -9,9 +10,12 @@ import java.io.Serializable;
  */
 public class GBEB_Deliver implements KompicsEvent, Serializable {
 
+    public final KAddress src;
     public final KompicsEvent payload;
 
-    public GBEB_Deliver(KompicsEvent payload) {
+
+    public GBEB_Deliver(KAddress src, KompicsEvent payload) {
+        this.src = src;
         this.payload = payload;
     }
 }

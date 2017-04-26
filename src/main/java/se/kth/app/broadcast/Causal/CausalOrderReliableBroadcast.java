@@ -77,5 +77,10 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
         }
     }
 
+    {
+        subscribe(crbBroadcastHandler, crb);
+        subscribe(rbDeliverHandler, rb);
+    }
+
 
 }

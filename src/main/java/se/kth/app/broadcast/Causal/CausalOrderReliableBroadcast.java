@@ -1,6 +1,7 @@
 package se.kth.app.broadcast.Causal;
 
-import se.kth.app.broadcast.BestEffort.OriginatedData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.kth.app.broadcast.Reliable.RB_Broadcast;
 import se.kth.app.broadcast.Reliable.RB_Deliver;
 import se.kth.app.broadcast.Reliable.ReliableBroadcast;
@@ -14,6 +15,9 @@ import java.util.HashSet;
  * Created by sindrikaldal on 24/04/17.
  */
 public class CausalOrderReliableBroadcast extends ComponentDefinition {
+
+    final static Logger LOG = LoggerFactory.getLogger(CausalOrderReliableBroadcast.class);
+    private String logPrefix = "";
 
     //***** Ports *******
     protected final Positive<ReliableBroadcast> rb = requires(ReliableBroadcast.class);
@@ -31,6 +35,13 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
     }
 
     //***** Handlers *******
+    Handler handleStart = new Handler<Start>() {
+        @Override
+        public void handle(Start event) {
+            LOG.info("{}Causal Broadcast STARTING...", logPrefix);
+        }
+    };
+
     protected final Handler<CRB_Broadcast> crbBroadcastHandler = new Handler<CRB_Broadcast>() {
         @Override
         public void handle(CRB_Broadcast crb_broadcast) {
@@ -63,7 +74,6 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
     };
 
 
-
     public static class Init extends se.sics.kompics.Init<CausalOrderReliableBroadcast> {
 
         public HashMap<KAddress, KompicsEvent> past;
@@ -77,5 +87,9 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
         }
     }
 
+
+    {
+        subscribe(handleStart, control);
+    }
 
 }

@@ -22,12 +22,13 @@ import org.slf4j.LoggerFactory;
 import se.kth.app.AppComp;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
 import se.kth.app.broadcast.BestEffort.GossipingBestEffortBroadcast;
+import se.kth.app.broadcast.Causal.CausalOrderReliableBroadcast;
+import se.kth.app.broadcast.Reliable.EagerReliableBroadcast;
 import se.kth.croupier.util.NoView;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.CroupierPort;
-import se.sics.ktoolbox.omngr.bootstrap.BootstrapClientComp;
 import se.sics.ktoolbox.overlaymngr.OverlayMngrPort;
 import se.sics.ktoolbox.overlaymngr.events.OMngrCroupier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
@@ -52,6 +53,8 @@ public class AppMngrComp extends ComponentDefinition {
   //***************************INTERNAL_STATE*********************************
   private Component appComp;
   private Component gossipingBestEffortBroadcast;
+  private Component reliableBroadcast;
+  private Component causalReliableBroadcast;
   //******************************AUX_STATE***********************************
   private OMngrCroupier.ConnectRequest pendingCroupierConnReq;
   //**************************************************************************
@@ -91,7 +94,13 @@ public class AppMngrComp extends ComponentDefinition {
   private void connectAppComp() {
     appComp = create(AppComp.class, new AppComp.Init(selfAdr, croupierId));
     gossipingBestEffortBroadcast = create(GossipingBestEffortBroadcast.class, new GossipingBestEffortBroadcast.Init(selfAdr));
+    causalReliableBroadcast = create(CausalOrderReliableBroadcast.class, new CausalOrderReliableBroadcast.Init(selfAdr));
+    reliableBroadcast = create(EagerReliableBroadcast.class, new EagerReliableBroadcast.Init(selfAdr));
+
     trigger(Start.event, gossipingBestEffortBroadcast.control());
+    trigger(Start.event, causalReliableBroadcast.control());
+    trigger(Start.event, reliableBroadcast.control());
+
     connect(appComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
     connect(appComp.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
     connect(appComp.getNegative(CroupierPort.class), extPorts.croupierPort, Channel.TWO_WAY);

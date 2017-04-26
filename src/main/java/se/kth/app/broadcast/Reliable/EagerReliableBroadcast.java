@@ -6,9 +6,7 @@ import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
 import se.kth.app.broadcast.BestEffort.GBEB_Broadcast;
 import se.kth.app.broadcast.BestEffort.GBEB_Deliver;
 import se.kth.app.broadcast.BestEffort.OriginatedData;
-import se.kth.networking.Message;
 import se.sics.kompics.*;
-import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.util.network.KAddress;
 
 import java.util.HashSet;
@@ -19,6 +17,7 @@ import java.util.HashSet;
 public class EagerReliableBroadcast extends ComponentDefinition {
 
     final static Logger LOG = LoggerFactory.getLogger(EagerReliableBroadcast.class);
+    private String logPrefix = "";
 
     protected final Positive<BestEffortBroadcast> gbeb = requires(BestEffortBroadcast.class);
     protected final Negative<ReliableBroadcast> rb = provides(ReliableBroadcast.class);
@@ -35,6 +34,12 @@ public class EagerReliableBroadcast extends ComponentDefinition {
     }
 
     //******* Handlers ******
+    Handler handleStart = new Handler<Start>() {
+        @Override
+        public void handle(Start event) {
+            LOG.info("{}Eager reliable broadcast STARTING...", logPrefix);
+        }
+    };
     protected final Handler<RB_Broadcast> rbBroadcastHandler = new Handler<RB_Broadcast>() {
 
         @Override
@@ -70,6 +75,10 @@ public class EagerReliableBroadcast extends ComponentDefinition {
             this.selfAdr = selfAdr;
             this.delivered = new HashSet<>();
         }
+    }
+
+    {
+        subscribe(handleStart, control);
     }
 
 }

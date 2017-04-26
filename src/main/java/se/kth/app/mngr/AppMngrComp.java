@@ -19,15 +19,10 @@ package se.kth.app.mngr;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.croupier.util.NoView;
 import se.kth.app.AppComp;
-import se.sics.kompics.Channel;
-import se.sics.kompics.Component;
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Handler;
-import se.sics.kompics.Negative;
-import se.sics.kompics.Positive;
-import se.sics.kompics.Start;
+import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
+import se.kth.croupier.util.NoView;
+import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.CroupierPort;
@@ -48,12 +43,14 @@ public class AppMngrComp extends ComponentDefinition {
   private String logPrefix = "";
   //*****************************CONNECTIONS**********************************
   Positive<OverlayMngrPort> omngrPort = requires(OverlayMngrPort.class);
+  protected final Positive<BestEffortBroadcast> gbeb = requires(BestEffortBroadcast.class);
   //***************************EXTERNAL_STATE*********************************
   private ExtPort extPorts;
   private KAddress selfAdr;
   private OverlayId croupierId;
   //***************************INTERNAL_STATE*********************************
   private Component appComp;
+  private Component gossipingBestEffortBroadcast;
   //******************************AUX_STATE***********************************
   private OMngrCroupier.ConnectRequest pendingCroupierConnReq;
   //**************************************************************************
@@ -92,9 +89,13 @@ public class AppMngrComp extends ComponentDefinition {
 
   private void connectAppComp() {
     appComp = create(AppComp.class, new AppComp.Init(selfAdr, croupierId));
+    //gossipingBestEffortBroadcast = create(GossipingBestEffortBroadcast.class, se.sics.kompics.Init.NONE);
+
     connect(appComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
     connect(appComp.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
     connect(appComp.getNegative(CroupierPort.class), extPorts.croupierPort, Channel.TWO_WAY);
+    connect(gbeb, appComp.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
+    //connect(gossipingBestEffortBroadcast.getPositive(BestEffortBroadcast.class), appComp.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
   }
 
   public static class Init extends se.sics.kompics.Init<AppMngrComp> {

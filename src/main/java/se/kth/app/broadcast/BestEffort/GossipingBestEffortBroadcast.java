@@ -27,6 +27,7 @@ import java.util.HashMap;
 public class GossipingBestEffortBroadcast extends ComponentDefinition {
 
     final static Logger LOG = LoggerFactory.getLogger(GossipingBestEffortBroadcast.class);
+    private String logPrefix = "";
 
     //***** Ports *******
     protected final Negative<BestEffortBroadcast> gbeb = provides(BestEffortBroadcast.class);
@@ -38,12 +39,20 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     private KAddress self;
 
 
-    /*public GossipingBestEffortBroadcast(Init init) {
+    public GossipingBestEffortBroadcast(Init init) {
         this.past = init.past;
         this.self = init.self;
-    }*/
+        logPrefix = "<nid:" + self.getId() + ">";
+    }
 
     //***** Handlers *******
+    Handler handleStart = new Handler<Start>() {
+        @Override
+        public void handle(Start event) {
+            LOG.info("{}Gossiping Broadcast STARTING...", logPrefix);
+        }
+    };
+
     protected final Handler<GBEB_Broadcast> broadcastHandler = new Handler<GBEB_Broadcast>() {
         @Override
         public void handle(GBEB_Broadcast GBEB_broadcast) {
@@ -55,6 +64,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
         @Override
         public void handle(CroupierMessage croupierMessage) {
             CroupierSample croupierSample = croupierMessage.croupierSample;
+
             System.out.println("Received a croupier sample.");
             if (croupierSample.publicSample.isEmpty()) {
                 return;
@@ -105,7 +115,8 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
         private HashMap<KAddress, KompicsEvent> past;
         private KAddress self;
 
-        public Init() {
+        public Init(KAddress address) {
+            this.self = address;
             this.past = new HashMap<>();
         }
 
@@ -113,9 +124,10 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
 
     {
         subscribe(broadcastHandler, gbeb);
-        subscribe(sampleHandler, ps);
+        subscribe(sampleHandler, gbeb);
         subscribe(handleHistoryRequest, net);
         subscribe(handleHistoryResponse, net);
+        subscribe(handleStart, control);
     }
 
 

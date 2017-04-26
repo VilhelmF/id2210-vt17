@@ -80,12 +80,14 @@ public class HostMngrComp extends ComponentDefinition {
     };
 
     private void connectBootstrapClient() {
+        LOG.info("Connecting bootstrapclient");
         bootstrapClientComp = create(BootstrapClientComp.class, new BootstrapClientComp.Init(selfAdr, bootstrapServer));
         connect(bootstrapClientComp.getNegative(Timer.class), timerPort, Channel.TWO_WAY);
         connect(bootstrapClientComp.getNegative(Network.class), networkPort, Channel.TWO_WAY);
     }
 
     private void connectOverlayMngr() {
+        LOG.info("Connecting overlay manager");
         OverlayMngrComp.ExtPort extPorts = new OverlayMngrComp.ExtPort(timerPort, networkPort,
                 bootstrapClientComp.getPositive(CCHeartbeatPort.class));
         overlayMngrComp = create(OverlayMngrComp.class, new OverlayMngrComp.Init((NatAwareAddress) selfAdr, extPorts));

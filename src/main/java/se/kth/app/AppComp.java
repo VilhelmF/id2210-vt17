@@ -20,6 +20,8 @@ package se.kth.app;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
+import se.kth.app.broadcast.Causal.CRB_Broadcast;
+import se.kth.app.broadcast.Causal.CausalBroadcast;
 import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
 import se.kth.networking.CroupierMessage;
@@ -32,6 +34,8 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
+
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -46,6 +50,7 @@ public class AppComp extends ComponentDefinition {
   Positive<Network> networkPort = requires(Network.class);
   Positive<CroupierPort> croupierPort = requires(CroupierPort.class);
   Positive<BestEffortBroadcast> gbeb = requires(BestEffortBroadcast.class);
+  Positive<CausalBroadcast> crb = requires(CausalBroadcast.class);
   //**************************************************************************
   private KAddress selfAdr;
 
@@ -77,7 +82,13 @@ public class AppComp extends ComponentDefinition {
 
             System.out.println("Got the croupierSample and I should forward it now.");
             // Test to send the sample to Gossiping Broadcast
-            trigger(new CroupierMessage(croupierSample), gbeb);
+            int randomNum = ThreadLocalRandom.current().nextInt(0, 101);
+            if(randomNum < 50) {
+                trigger(new CroupierMessage(croupierSample), gbeb);
+            } else {
+                trigger(new CRB_Broadcast(selfAdr + " sending message!"), crb);
+            }
+
 
             /*
             List<KAddress> sample = CroupierHelper.getSample(croupierSample);

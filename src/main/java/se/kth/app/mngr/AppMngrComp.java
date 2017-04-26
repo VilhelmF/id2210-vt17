@@ -104,8 +104,19 @@ public class AppMngrComp extends ComponentDefinition {
     connect(appComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
     connect(appComp.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
     connect(appComp.getNegative(CroupierPort.class), extPorts.croupierPort, Channel.TWO_WAY);
+
+    // AppComp <----> Gossiping best effort broadcast
     connect(appComp.getNegative(BestEffortBroadcast.class), gossipingBestEffortBroadcast.getPositive(BestEffortBroadcast.class), Channel.TWO_WAY);
     connect(gossipingBestEffortBroadcast.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
+    /*// AppComp <----> Causal broadcast
+    connect(appComp.getNegative(CausalBroadcast.class), causalReliableBroadcast.getPositive(CausalBroadcast.class), Channel.TWO_WAY);
+    connect(gossipingBestEffortBroadcast.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
+    // Causal Broadcast <---->  Reliable broadcast
+    connect(causalReliableBroadcast.getNegative(ReliableBroadcast.class), reliableBroadcast.getPositive(ReliableBroadcast.class), Channel.TWO_WAY);
+    connect(reliableBroadcast.getNegative(CausalBroadcast.class), causalReliableBroadcast.getPositive(CausalBroadcast.class), Channel.TWO_WAY);
+    // Reliable Broadcast <----> Gossiping best effort broadcast
+    connect(reliableBroadcast.getNegative(BestEffortBroadcast.class), gossipingBestEffortBroadcast.getPositive(BestEffortBroadcast.class), Channel.TWO_WAY);
+    connect(gossipingBestEffortBroadcast.getNegative(ReliableBroadcast.class), reliableBroadcast.getPositive(ReliableBroadcast.class), Channel.TWO_WAY);*/
   }
 
   public static class Init extends se.sics.kompics.Init<AppMngrComp> {

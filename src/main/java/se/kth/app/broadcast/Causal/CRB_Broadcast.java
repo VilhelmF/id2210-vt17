@@ -9,9 +9,9 @@ import java.io.Serializable;
  */
 public class CRB_Broadcast implements KompicsEvent, Serializable {
 
-    public final KompicsEvent payload;
+    public final String payload;
 
-    public CRB_Broadcast(KompicsEvent payload) {
+    public CRB_Broadcast(String payload) {
         this.payload = payload;
     }
 }

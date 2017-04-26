@@ -70,7 +70,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
                 KHeader header = new BasicHeader(self, peer, Transport.TCP);
                 KContentMsg msg = new BasicContentMsg(header, new HistoryRequest());
                 trigger(msg, net);
-                LOG.info("{ } Gossiping component : " + self.getIp() + " sent weird message to " + peer.getIp());
+                //LOG.info("{ } Gossiping component : " + self.getIp() + " sent weird message to " + peer.getIp());
             }
         }
     };
@@ -95,8 +95,8 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
                 trigger(new GBEB_Deliver(key, unseen.get(key)), gbeb);
             }
             past.putAll(unseen);
-            LOG.info("{ } Gossiping component : " + self.getIp() + " received the history response from "
-                    + container.getSource());
+            //LOG.info("{ } Gossiping component : " + self.getIp() + " received the history response from "
+            //        + container.getSource());
         }
     };
 

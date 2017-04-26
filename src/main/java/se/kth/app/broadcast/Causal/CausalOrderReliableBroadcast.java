@@ -2,7 +2,6 @@ package se.kth.app.broadcast.Causal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.app.broadcast.Reliable.RB_Broadcast;
 import se.kth.app.broadcast.Reliable.RB_Deliver;
 import se.kth.app.broadcast.Reliable.ReliableBroadcast;
 import se.sics.kompics.*;
@@ -45,8 +44,9 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
     protected final Handler<CRB_Broadcast> crbBroadcastHandler = new Handler<CRB_Broadcast>() {
         @Override
         public void handle(CRB_Broadcast crb_broadcast) {
-            trigger(new RB_Broadcast(selfAdr, new CausalData(past, crb_broadcast.payload)), rb);
-            delivered.add(crb_broadcast.payload);
+            LOG.info("{} received the following request: " + crb_broadcast.payload, logPrefix);
+            //trigger(new RB_Broadcast(selfAdr, new CausalData(past, crb_broadcast.payload)), rb);
+            //delivered.add(crb_broadcast.payload);
         }
     };
 
@@ -90,6 +90,8 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
 
     {
         subscribe(handleStart, control);
+        subscribe(rbDeliverHandler, crb);
+        subscribe(crbBroadcastHandler, crb);
     }
 
 }

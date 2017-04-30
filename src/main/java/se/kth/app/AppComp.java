@@ -17,6 +17,7 @@
  */
 package se.kth.app;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
@@ -56,14 +57,14 @@ public class AppComp extends ComponentDefinition {
   //**************************************************************************
   private KAddress selfAdr;
 
-  private int testCounter;
+  private int messageCounter;
 
   public AppComp(Init init) {
     selfAdr = init.selfAdr;
     logPrefix = "<nid:" + selfAdr.getId() + ">";
     LOG.info("{}initiating...", logPrefix);
 
-    testCounter = 1;
+    messageCounter = 1;
     subscribe(handleStart, control);
     subscribe(handleCroupierSample, croupierPort);
     subscribe(handlePing, networkPort);
@@ -87,13 +88,14 @@ public class AppComp extends ComponentDefinition {
             }
 
             // Test to send the sample to Gossiping Broadcast
-            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr + " sending message: " + testCounter)), crb);
-            testCounter++;
             int randomNum = ThreadLocalRandom.current().nextInt(0, 101);
             if(randomNum < 10) {
-                System.out.println("Got the croupierSample and I should forward it now.");
-                trigger(new CroupierMessage(croupierSample), gbeb);
+                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
+                LOG.info("{} Sendig message:  " + messageId, logPrefix);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(selfAdr + " sending message: " + messageCounter)), crb);
+                messageCounter++;
             }
+            trigger(new CroupierMessage(croupierSample), gbeb);
             /*
             List<KAddress> sample = CroupierHelper.getSample(croupierSample);
             for (KAddress peer : sample) {
@@ -109,7 +111,7 @@ public class AppComp extends ComponentDefinition {
 
       @Override
       public void handle(CRB_Deliver crb_deliver) {
-          LOG.info("{} received crb delivery!", logPrefix);
+          LOG.info("{} received crb delivery: " + crb_deliver.id, logPrefix);
       }
   };
 

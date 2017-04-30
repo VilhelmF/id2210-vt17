@@ -12,8 +12,10 @@ public class CRB_Broadcast implements KompicsEvent, Serializable {
 
     public final KAddress src;
     public final KompicsEvent payload;
+    public final String id;
 
-    public CRB_Broadcast(KAddress src, KompicsEvent payload) {
+    public CRB_Broadcast(String id, KAddress src, KompicsEvent payload) {
+        this.id = id;
         this.src = src;
         this.payload = payload;
     }

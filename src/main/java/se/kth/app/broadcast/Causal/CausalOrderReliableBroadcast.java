@@ -26,7 +26,7 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
     protected final Negative<CausalBroadcast> crb = provides(CausalBroadcast.class);
 
     //***** Fields *******
-    private HashMap<KAddress, KompicsEvent> past;
+    private HashMap<String, KompicsEvent> past;
     private HashSet<KompicsEvent> delivered;
     private final KAddress selfAdr;
 
@@ -48,8 +48,8 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
         @Override
         public void handle(CRB_Broadcast crb_broadcast) {
             //LOG.info("{} received the following message: " + crb_broadcast.payload, logPrefix);
-            trigger(new RB_Broadcast(selfAdr, new CausalData(past, crb_broadcast.payload)), rb);
-            delivered.add(crb_broadcast.payload);
+            trigger(new RB_Broadcast(crb_broadcast.id, selfAdr, new CausalData(past, crb_broadcast.payload)), rb);
+            past.put(crb_broadcast.id, crb_broadcast.payload);
         }
     };
 
@@ -59,7 +59,7 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
             LOG.info("{} Delivery reached the causal order broadcast!", logPrefix);
             CausalData data = (CausalData) rb_deliver.payload;
             if (!delivered.contains(data.payload)) {
-                for (KAddress key : data.past.keySet()) {
+                for (String key : data.past.keySet()) {
                     if (!delivered.contains(data.past.get(key))) {
                         trigger(new CRB_Deliver(key, data.past.get(key)), crb);
                         LOG.info("{} Delivery triggered", logPrefix);
@@ -70,10 +70,10 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
                     }
                 }
                 LOG.info("{} Delivery triggered", logPrefix);
-                trigger(new CRB_Deliver(rb_deliver.src, data.payload), crb);
+                trigger(new CRB_Deliver(rb_deliver.id, data.payload), crb);
                 delivered.add(data.payload);
-                if (!past.containsKey(rb_deliver.src)) {
-                    past.put(rb_deliver.src, data.payload);
+                if (!past.containsKey(rb_deliver.id)) {
+                    past.put(rb_deliver.id, data.payload);
                 }
             }
         }
@@ -82,7 +82,7 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
 
     public static class Init extends se.sics.kompics.Init<CausalOrderReliableBroadcast> {
 
-        public HashMap<KAddress, KompicsEvent> past;
+        public HashMap<String, KompicsEvent> past;
         public HashSet<KompicsEvent> delivered;
         public final KAddress selfAdr;
 

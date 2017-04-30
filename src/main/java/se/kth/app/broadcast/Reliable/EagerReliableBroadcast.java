@@ -7,6 +7,7 @@ import se.kth.app.broadcast.BestEffort.GBEB_Broadcast;
 import se.kth.app.broadcast.BestEffort.GBEB_Deliver;
 import se.kth.app.broadcast.BestEffort.OriginatedData;
 import se.kth.app.broadcast.Causal.CausalBroadcast;
+import se.kth.app.broadcast.Causal.CausalData;
 import se.sics.kompics.*;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -46,20 +47,21 @@ public class EagerReliableBroadcast extends ComponentDefinition {
 
         @Override
         public void handle(RB_Broadcast broadcastMessage) {
-            trigger(new GBEB_Broadcast(broadcastMessage.src, new OriginatedData(selfAdr, broadcastMessage.payload)), gbeb);
+            trigger(new GBEB_Broadcast(broadcastMessage.id, broadcastMessage.src,
+                    new OriginatedData(selfAdr, broadcastMessage.payload)), gbeb);
         }
     };
 
     protected final Handler<GBEB_Deliver> gbebDeliverHandler = new Handler<GBEB_Deliver>() {
         @Override
         public void handle(GBEB_Deliver data) {
+            CausalData causalData = (CausalData) data.payload;
             LOG.info("{} Received the GBEB_DELIVER", logPrefix);
-            OriginatedData originatedData = (OriginatedData) data.payload;
-            if (!delivered.contains(originatedData.payload)) {
+            if (!delivered.contains(causalData)) {
                 LOG.info("{} I don't ever reach this place, right?", logPrefix);
-                delivered.add(originatedData.payload);
-                trigger(new RB_Deliver(originatedData.src, originatedData.payload), rb);
-                trigger(new GBEB_Broadcast(originatedData.src, new OriginatedData(selfAdr, originatedData.payload)), gbeb);
+                delivered.add(causalData);
+                trigger(new RB_Deliver(data.id, data.src, causalData), rb);
+                trigger(new GBEB_Broadcast(data.id, data.src, new OriginatedData(selfAdr, causalData)), gbeb);
             }
         }
     };

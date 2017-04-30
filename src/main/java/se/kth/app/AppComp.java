@@ -20,7 +20,9 @@ package se.kth.app;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
+import se.kth.app.broadcast.BroadcastMessage;
 import se.kth.app.broadcast.Causal.CRB_Broadcast;
+import se.kth.app.broadcast.Causal.CRB_Deliver;
 import se.kth.app.broadcast.Causal.CausalBroadcast;
 import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
@@ -54,15 +56,19 @@ public class AppComp extends ComponentDefinition {
   //**************************************************************************
   private KAddress selfAdr;
 
+  private int testCounter;
+
   public AppComp(Init init) {
     selfAdr = init.selfAdr;
     logPrefix = "<nid:" + selfAdr.getId() + ">";
     LOG.info("{}initiating...", logPrefix);
 
+    testCounter = 1;
     subscribe(handleStart, control);
     subscribe(handleCroupierSample, croupierPort);
     subscribe(handlePing, networkPort);
     subscribe(handlePong, networkPort);
+    subscribe(handleCRBDeliver, crb);
   }
 
   Handler handleStart = new Handler<Start>() {
@@ -80,16 +86,14 @@ public class AppComp extends ComponentDefinition {
                 return;
             }
 
-            System.out.println("Got the croupierSample and I should forward it now.");
             // Test to send the sample to Gossiping Broadcast
+            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr + " sending message: " + testCounter)), crb);
+            testCounter++;
             int randomNum = ThreadLocalRandom.current().nextInt(0, 101);
-            if(randomNum < 50) {
+            if(randomNum < 10) {
+                System.out.println("Got the croupierSample and I should forward it now.");
                 trigger(new CroupierMessage(croupierSample), gbeb);
-            } else {
-                trigger(new CRB_Broadcast(selfAdr + " sending message!"), crb);
             }
-
-
             /*
             List<KAddress> sample = CroupierHelper.getSample(croupierSample);
             for (KAddress peer : sample) {
@@ -99,6 +103,14 @@ public class AppComp extends ComponentDefinition {
             }
             */
     }
+  };
+
+  Handler handleCRBDeliver = new Handler<CRB_Deliver>() {
+
+      @Override
+      public void handle(CRB_Deliver crb_deliver) {
+          LOG.info("{} received crb delivery!", logPrefix);
+      }
   };
 
   ClassMatchedHandler handlePing

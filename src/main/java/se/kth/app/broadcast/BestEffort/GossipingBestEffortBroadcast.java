@@ -2,6 +2,9 @@ package se.kth.app.broadcast.BestEffort;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.app.broadcast.BroadcastMessage;
+import se.kth.app.broadcast.Causal.CausalData;
+import se.kth.app.broadcast.Reliable.ReliableBroadcast;
 import se.kth.croupier.util.CroupierHelper;
 import se.kth.networking.CroupierMessage;
 import se.sics.kompics.*;
@@ -27,9 +30,10 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     private String logPrefix = "";
 
     //***** Ports *******
-    protected final Negative<BestEffortBroadcast> gbeb = provides(BestEffortBroadcast.class);
+    protected final Positive<ReliableBroadcast> rbd = requires(ReliableBroadcast.class);
     protected final Positive<CroupierPort> ps = requires(CroupierPort.class);
     protected final Positive<Network> net = requires(Network.class);
+    protected final Negative<BestEffortBroadcast> gbeb = provides(BestEffortBroadcast.class);
 
     //***** Fields *******
     private HashMap<KAddress, KompicsEvent> past;
@@ -53,7 +57,15 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     protected final Handler<GBEB_Broadcast> broadcastHandler = new Handler<GBEB_Broadcast>() {
         @Override
         public void handle(GBEB_Broadcast GBEB_broadcast) {
-            past.put(GBEB_broadcast.src, GBEB_broadcast.payload);
+            try {
+                OriginatedData message = (OriginatedData) GBEB_broadcast.payload;
+                CausalData cd = (CausalData) message.payload;
+                BroadcastMessage broadcastMessage = (BroadcastMessage) cd.payload;
+                //LOG.info("{} Received the following message: " + broadcastMessage.message, logPrefix);
+                past.put(GBEB_broadcast.src, GBEB_broadcast.payload);
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
         }
     };
 
@@ -70,7 +82,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
                 KHeader header = new BasicHeader(self, peer, Transport.TCP);
                 KContentMsg msg = new BasicContentMsg(header, new HistoryRequest());
                 trigger(msg, net);
-                //LOG.info("{ } Gossiping component : " + self.getIp() + " sent weird message to " + peer.getIp());
+                LOG.info("{ } Gossiping component : " + self.getIp() + " sent weird message to " + peer.getIp());
             }
         }
     };
@@ -90,21 +102,25 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
         @Override
         public void handle(HistoryResponse content, KContentMsg<?, ?, HistoryResponse> container) {
             HashMap<KAddress, KompicsEvent> unseen = difference(content.history, past);
+            LOG.info("{}Size of unseen: " + unseen.size(), logPrefix);
 
             for (KAddress key : unseen.keySet()) {
+                LOG.info("{} Delivering message!", logPrefix);
                 trigger(new GBEB_Deliver(key, unseen.get(key)), gbeb);
             }
             past.putAll(unseen);
-            //LOG.info("{ } Gossiping component : " + self.getIp() + " received the history response from "
-            //        + container.getSource());
+            LOG.info("{ } Gossiping component : " + self.getIp() + " received the history response from "
+                    + container.getSource());
         }
     };
 
     public HashMap<KAddress, KompicsEvent> difference(HashMap history, HashMap past) {
         HashMap<KAddress, KompicsEvent> unseen = new HashMap<>();
+        LOG.info("{}Size of history: " + history.size(), logPrefix);
+        LOG.info("{}Size of past: " + past.size(), logPrefix);
         unseen.putAll(history);
         unseen.putAll(past);
-        unseen.keySet().removeAll(past.keySet());
+        //unseen.keySet().removeAll(past.keySet());
         return unseen;
     }
 

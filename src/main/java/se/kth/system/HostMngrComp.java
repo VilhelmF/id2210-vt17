@@ -44,7 +44,6 @@ public class HostMngrComp extends ComponentDefinition {
     //*****************************CONNECTIONS**********************************
     Positive<Timer> timerPort = requires(Timer.class);
     Positive<Network> networkPort = requires(Network.class);
-    //protected final Component basicbroadcast = create(GossipingBestEffortBroadcast.class, Init.NONE);
     //***************************EXTERNAL_STATE*********************************
     private KAddress selfAdr;
     private KAddress bootstrapServer;
@@ -98,7 +97,6 @@ public class HostMngrComp extends ComponentDefinition {
                 overlayMngrComp.getPositive(CroupierPort.class), overlayMngrComp.getNegative(OverlayViewUpdatePort.class));
         appMngrComp = create(AppMngrComp.class, new AppMngrComp.Init(extPorts, selfAdr, croupierId));
         connect(appMngrComp.getNegative(OverlayMngrPort.class), overlayMngrComp.getPositive(OverlayMngrPort.class), Channel.TWO_WAY);
-        //connect(basicbroadcast.getPositive(BestEffortBroadcast.class), appComp.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
     }
 
     public static class Init extends se.sics.kompics.Init<HostMngrComp> {

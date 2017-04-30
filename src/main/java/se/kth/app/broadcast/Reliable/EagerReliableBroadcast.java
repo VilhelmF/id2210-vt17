@@ -6,6 +6,7 @@ import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
 import se.kth.app.broadcast.BestEffort.GBEB_Broadcast;
 import se.kth.app.broadcast.BestEffort.GBEB_Deliver;
 import se.kth.app.broadcast.BestEffort.OriginatedData;
+import se.kth.app.broadcast.Causal.CausalBroadcast;
 import se.sics.kompics.*;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -20,6 +21,7 @@ public class EagerReliableBroadcast extends ComponentDefinition {
     private String logPrefix = "";
 
     protected final Positive<BestEffortBroadcast> gbeb = requires(BestEffortBroadcast.class);
+    protected final Positive<CausalBroadcast> rbd = requires(CausalBroadcast.class);
     protected final Negative<ReliableBroadcast> rb = provides(ReliableBroadcast.class);
 
 
@@ -51,8 +53,10 @@ public class EagerReliableBroadcast extends ComponentDefinition {
     protected final Handler<GBEB_Deliver> gbebDeliverHandler = new Handler<GBEB_Deliver>() {
         @Override
         public void handle(GBEB_Deliver data) {
+            LOG.info("{} Received the GBEB_DELIVER", logPrefix);
             OriginatedData originatedData = (OriginatedData) data.payload;
             if (!delivered.contains(originatedData.payload)) {
+                LOG.info("{} I don't ever reach this place, right?", logPrefix);
                 delivered.add(originatedData.payload);
                 trigger(new RB_Deliver(originatedData.src, originatedData.payload), rb);
                 trigger(new GBEB_Broadcast(originatedData.src, new OriginatedData(selfAdr, originatedData.payload)), gbeb);

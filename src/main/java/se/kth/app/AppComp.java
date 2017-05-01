@@ -92,7 +92,8 @@ public class AppComp extends ComponentDefinition {
             if(randomNum < 10) {
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} Sendig message:  " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(selfAdr + " sending message: " + messageCounter)), crb);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(selfAdr + " sending message: "
+                        + messageCounter)), crb);
                 messageCounter++;
             }
             trigger(new CroupierMessage(croupierSample), gbeb);

@@ -17,9 +17,14 @@
  */
 package se.kth.app;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
+import se.kth.app.broadcast.BroadcastMessage;
+import se.kth.app.broadcast.Causal.CRB_Broadcast;
+import se.kth.app.broadcast.Causal.CRB_Deliver;
+import se.kth.app.broadcast.Causal.CausalBroadcast;
 import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
 import se.kth.networking.CroupierMessage;
@@ -32,6 +37,8 @@ import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
+
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -46,18 +53,23 @@ public class AppComp extends ComponentDefinition {
   Positive<Network> networkPort = requires(Network.class);
   Positive<CroupierPort> croupierPort = requires(CroupierPort.class);
   Positive<BestEffortBroadcast> gbeb = requires(BestEffortBroadcast.class);
+  Positive<CausalBroadcast> crb = requires(CausalBroadcast.class);
   //**************************************************************************
   private KAddress selfAdr;
+
+  private int messageCounter;
 
   public AppComp(Init init) {
     selfAdr = init.selfAdr;
     logPrefix = "<nid:" + selfAdr.getId() + ">";
     LOG.info("{}initiating...", logPrefix);
 
+    messageCounter = 1;
     subscribe(handleStart, control);
     subscribe(handleCroupierSample, croupierPort);
     subscribe(handlePing, networkPort);
     subscribe(handlePong, networkPort);
+    subscribe(handleCRBDeliver, crb);
   }
 
   Handler handleStart = new Handler<Start>() {
@@ -75,10 +87,16 @@ public class AppComp extends ComponentDefinition {
                 return;
             }
 
-            System.out.println("Got the croupierSample and I should forward it now.");
             // Test to send the sample to Gossiping Broadcast
+            int randomNum = ThreadLocalRandom.current().nextInt(0, 101);
+            if(randomNum < 10) {
+                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
+                LOG.info("{} Sendig message:  " + messageId, logPrefix);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(selfAdr + " sending message: "
+                        + messageCounter)), crb);
+                messageCounter++;
+            }
             trigger(new CroupierMessage(croupierSample), gbeb);
-
             /*
             List<KAddress> sample = CroupierHelper.getSample(croupierSample);
             for (KAddress peer : sample) {
@@ -88,6 +106,14 @@ public class AppComp extends ComponentDefinition {
             }
             */
     }
+  };
+
+  Handler handleCRBDeliver = new Handler<CRB_Deliver>() {
+
+      @Override
+      public void handle(CRB_Deliver crb_deliver) {
+          LOG.info("{} received crb delivery: " + crb_deliver.id, logPrefix);
+      }
   };
 
   ClassMatchedHandler handlePing

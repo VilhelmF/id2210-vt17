@@ -22,12 +22,15 @@ import org.slf4j.LoggerFactory;
 import se.kth.app.AppComp;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
 import se.kth.app.broadcast.BestEffort.GossipingBestEffortBroadcast;
+import se.kth.app.broadcast.Causal.CausalBroadcast;
+import se.kth.app.broadcast.Causal.CausalOrderReliableBroadcast;
+import se.kth.app.broadcast.Reliable.EagerReliableBroadcast;
+import se.kth.app.broadcast.Reliable.ReliableBroadcast;
 import se.kth.croupier.util.NoView;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.CroupierPort;
-import se.sics.ktoolbox.omngr.bootstrap.BootstrapClientComp;
 import se.sics.ktoolbox.overlaymngr.OverlayMngrPort;
 import se.sics.ktoolbox.overlaymngr.events.OMngrCroupier;
 import se.sics.ktoolbox.util.identifiable.overlay.OverlayId;
@@ -52,6 +55,8 @@ public class AppMngrComp extends ComponentDefinition {
   //***************************INTERNAL_STATE*********************************
   private Component appComp;
   private Component gossipingBestEffortBroadcast;
+  private Component reliableBroadcast;
+  private Component causalReliableBroadcast;
   //******************************AUX_STATE***********************************
   private OMngrCroupier.ConnectRequest pendingCroupierConnReq;
   //**************************************************************************
@@ -91,12 +96,29 @@ public class AppMngrComp extends ComponentDefinition {
   private void connectAppComp() {
     appComp = create(AppComp.class, new AppComp.Init(selfAdr, croupierId));
     gossipingBestEffortBroadcast = create(GossipingBestEffortBroadcast.class, new GossipingBestEffortBroadcast.Init(selfAdr));
+    causalReliableBroadcast = create(CausalOrderReliableBroadcast.class, new CausalOrderReliableBroadcast.Init(selfAdr));
+    reliableBroadcast = create(EagerReliableBroadcast.class, new EagerReliableBroadcast.Init(selfAdr));
+
     trigger(Start.event, gossipingBestEffortBroadcast.control());
+    trigger(Start.event, causalReliableBroadcast.control());
+    trigger(Start.event, reliableBroadcast.control());
+
     connect(appComp.getNegative(Timer.class), extPorts.timerPort, Channel.TWO_WAY);
     connect(appComp.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
     connect(appComp.getNegative(CroupierPort.class), extPorts.croupierPort, Channel.TWO_WAY);
+
+    // AppComp <----> Gossiping best effort broadcast
     connect(appComp.getNegative(BestEffortBroadcast.class), gossipingBestEffortBroadcast.getPositive(BestEffortBroadcast.class), Channel.TWO_WAY);
     connect(gossipingBestEffortBroadcast.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
+    // AppComp <----> Causal broadcast
+    connect(appComp.getNegative(CausalBroadcast.class), causalReliableBroadcast.getPositive(CausalBroadcast.class), Channel.TWO_WAY);
+    connect(causalReliableBroadcast.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
+    // Causal Broadcast <---->  Reliable broadcast
+    connect(causalReliableBroadcast.getNegative(ReliableBroadcast.class), reliableBroadcast.getPositive(ReliableBroadcast.class), Channel.TWO_WAY);
+    connect(reliableBroadcast.getNegative(CausalBroadcast.class), causalReliableBroadcast.getPositive(CausalBroadcast.class), Channel.TWO_WAY);
+    // Reliable Broadcast <----> Gossiping best effort broadcast
+    connect(reliableBroadcast.getNegative(BestEffortBroadcast.class), gossipingBestEffortBroadcast.getPositive(BestEffortBroadcast.class), Channel.TWO_WAY);
+    connect(gossipingBestEffortBroadcast.getNegative(ReliableBroadcast.class), reliableBroadcast.getPositive(ReliableBroadcast.class), Channel.TWO_WAY);
   }
 
   public static class Init extends se.sics.kompics.Init<AppMngrComp> {

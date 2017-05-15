@@ -1,6 +1,5 @@
 package se.kth.app.broadcast.Reliable;
 
-import se.kth.networking.NetAddress;
 import se.sics.kompics.KompicsEvent;
 import se.sics.ktoolbox.util.network.KAddress;
 
@@ -13,8 +12,10 @@ public class RB_Deliver implements KompicsEvent, Serializable{
 
     public final KAddress src;
     public final KompicsEvent payload;
+    public final String id;
 
-    public RB_Deliver(KAddress src, KompicsEvent payload) {
+    public RB_Deliver(String id, KAddress src, KompicsEvent payload) {
+        this.id = id;
         this.src = src;
         this.payload = payload;
     }

@@ -54,6 +54,11 @@ public class LineIdentifier implements Comparable {
                 return myPosition.compareTo(otherPosition);
             }
         }
-        return this.positions.size() > other.positions.size() ? 1 : 0;
+
+        if (this.positions.size() == other.positions.size()) {
+            return 0;
+        }
+
+        return this.positions.size() > other.positions.size() ? 1 : -1;
     }
 }

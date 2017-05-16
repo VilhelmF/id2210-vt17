@@ -67,17 +67,17 @@ public class Position implements Comparable {
 
         if (this.digit <= other.digit) {
             if (this.digit < other.digit) {
-                return 0;
+                return -1;
             } else {
                 if (this.siteID <= other.siteID) {
                     if (this.siteID < other.siteID) {
-                        return 0;
+                        return -1;
                     } else {
                         if (this.clockValue <= other.clockValue) {
                             if (this.clockValue < other.clockValue) {
-                                return 0;
+                                return -1;
                             } else {
-                                return 1;
+                                return 0;
                             }
                         } else {
                             return 1;

@@ -10,14 +10,16 @@ import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.util.network.KContentMsg;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 
 public class Logoot extends ComponentDefinition {
 
-    protected List<Patch> historyBuffer = new ArrayList<>();
+    protected HashMap<Integer, Patch> historyBuffer = new HashMap<>();
     protected List<LineIdentifier> identifierTable = new ArrayList<>();
+    protected HashMap<Integer, Integer> cemetary = new HashMap<>();
     protected final Positive<Network> net = requires(Network.class);
 
 
@@ -95,7 +97,8 @@ public class Logoot extends ComponentDefinition {
         @Override
         public void handle(Patch content, KContentMsg<?, ?, Patch> container) {
             execute(content);
-            historyBuffer.add(content);
+            content.setDegree(1);
+            historyBuffer.put(content.getId(), content);
         }
     };
 
@@ -104,14 +107,30 @@ public class Logoot extends ComponentDefinition {
 
         @Override
         public void handle(Undo content, KContentMsg<?, ?, Undo> container) {
+            Patch patch = historyBuffer.get(content.getPatchID());
+            patch.setDegree(patch.getDegree() - 1);
+            if (patch.getDegree() == 0) {
+                execute(inverse(patch));
+            }
+        }
+    };
 
+    protected final ClassMatchedHandler deliverRedoHandler
+            = new ClassMatchedHandler<Redo, KContentMsg<?, ?, Redo>>() {
+
+        @Override
+        public void handle(Redo content, KContentMsg<?, ?, Redo> container) {
+            Patch patch = historyBuffer.get(content.getPatchID());
+            patch.setDegree(patch.getDegree() + 1);
+            if (patch.getDegree() == 1) {
+                execute(patch);
+            }
         }
     };
 
 
     public int prefix(List<Position> positions, int index) {
         String digit = "";
-
 
         for (int i = 0; i < index; i++) {
             try {
@@ -122,12 +141,26 @@ public class Logoot extends ComponentDefinition {
         }
 
         return Integer.parseInt(digit);
+    }
 
+    public Patch inverse(Patch patch) {
+
+        Patch inversePatch = new Patch(patch.getId(), patch.getOperations(), patch.getDegree());
+
+        for (Operation op : inversePatch.getOperations()) {
+            if (op.getType().equals(OperationType.INSERT)) {
+                op.setType(OperationType.DELETE);
+            } else {
+                op.setType(OperationType.INSERT);
+            }
+        }
+        return inversePatch;
     }
 
     {
         subscribe(deliverPatchHandler, net);
         subscribe(deliverUndoHandler, net);
+        subscribe(deliverRedoHandler, net);
     }
 
 

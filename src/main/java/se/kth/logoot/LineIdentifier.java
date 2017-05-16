@@ -21,4 +21,3 @@ public class LineIdentifier {
         this.positions = positions;
     }
 }
-    

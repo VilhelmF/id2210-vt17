@@ -83,7 +83,10 @@ public class Logoot extends ComponentDefinition {
     public void execute(Patch patch) {
         for (Operation op : patch.getOperations()) {
             if (op.getType().equals(OperationType.INSERT)) {
+                int degree = cemetery.get(op.getId());
+                if (degree == 1) {
 
+                }
             } else {
 
             }
@@ -154,6 +157,25 @@ public class Logoot extends ComponentDefinition {
             }
         }
         return inversePatch;
+    }
+
+    public int positionBinarySearch(LineIdentifier identifier) {
+
+        int low = 0;
+        int high = identifierTable.size() - 1;
+        
+        while(low <= high ) {
+            int middle = (low + high) / 2;
+            if (identifier.compareTo(identifierTable.get(middle)) == 1){
+                low = middle + 1;
+            } else if (identifierTable.get(middle).compareTo(identifier) == 1) {
+                high = middle - 1;
+            } else { // The element has been found
+                return middle;
+            }
+        }
+
+        return 0;
     }
 
     {

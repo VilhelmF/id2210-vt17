@@ -1,6 +1,6 @@
 package se.kth.app.logoot;
 
-public class Position {
+public class Position implements Comparable {
 
     private int digit;
     private int siteID;
@@ -38,5 +38,57 @@ public class Position {
 
     public void setClockValue(int clockValue) {
         this.clockValue = clockValue;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Position position = (Position) o;
+
+        if (digit != position.digit) return false;
+        if (siteID != position.siteID) return false;
+        return clockValue == position.clockValue;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = digit;
+        result = 31 * result + siteID;
+        result = 31 * result + clockValue;
+        return result;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        Position other = (Position) o;
+
+        if (this.digit <= other.digit) {
+            if (this.digit < other.digit) {
+                return 0;
+            } else {
+                if (this.siteID <= other.siteID) {
+                    if (this.siteID < other.siteID) {
+                        return 0;
+                    } else {
+                        if (this.clockValue <= other.clockValue) {
+                            if (this.clockValue < other.clockValue) {
+                                return 0;
+                            } else {
+                                return 1;
+                            }
+                        } else {
+                            return 1;
+                        }
+                    }
+                } else {
+                    return 1;
+                }
+            }
+        } else {
+            return 1;
+        }
     }
 }

@@ -49,6 +49,18 @@ public class Logoot {
     }
 
     public int prefix(List<Position> positions, int index) {
-        return 0;
+        String digit = "";
+
+
+        for (int i = 0; i < index; i++) {
+            try {
+                digit += Integer.toString(positions.get(i).getDigit());
+            } catch (IndexOutOfBoundsException e) {
+                digit += "0";
+            }
+        }
+
+        return Integer.parseInt(digit);
+
     }
 }

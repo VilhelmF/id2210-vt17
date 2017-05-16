@@ -4,22 +4,22 @@ import se.kth.networking.NetAddress;
 
 public class Position {
 
-    private int i;
+    private int digit;
     private NetAddress src;
     private int clockValue;
 
-    public Position(int i, NetAddress src, int clockValue) {
-        this.i = i;
+    public Position(int digit, NetAddress src, int clockValue) {
+        this.digit = digit;
         this.src = src;
         this.clockValue = clockValue;
     }
 
-    public int getI() {
-        return i;
+    public int getDigit() {
+        return digit;
     }
 
-    public void setI(int i) {
-        this.i = i;
+    public void setDigit(int digit) {
+        this.digit = digit;
     }
 
     public NetAddress getSrc() {

@@ -1,4 +1,4 @@
-package se.kth.logoot;
+package se.kth.app.logoot;
 
 import java.util.List;
 
@@ -8,6 +8,9 @@ import java.util.List;
 public class LineIdentifier {
 
     private List<Position> positions;
+
+    public LineIdentifier() {
+    }
 
     public LineIdentifier(List<Position> positions) {
         this.positions = positions;
@@ -21,4 +24,3 @@ public class LineIdentifier {
         this.positions = positions;
     }
 }
-    

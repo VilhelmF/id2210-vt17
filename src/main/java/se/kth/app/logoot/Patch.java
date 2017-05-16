@@ -1,17 +1,27 @@
-package se.kth.logoot;
+package se.kth.app.logoot;
 
-import se.kth.logoot.Operation.Operation;
+import se.kth.app.logoot.Operation.Operation;
 
 import java.util.List;
 
 public class Patch {
 
+    private int id;
     private List<Operation> operations;
     private int degree;
 
-    public Patch(List<Operation> operations, int degree) {
+    public Patch(int id, List<Operation> operations, int degree) {
+        this.id = id;
         this.operations = operations;
         this.degree = degree;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public List<Operation> getOperations() {

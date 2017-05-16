@@ -1,6 +1,4 @@
-package se.kth.logoot;
-
-import se.kth.networking.NetAddress;
+package se.kth.app.logoot;
 
 public class Position {
 

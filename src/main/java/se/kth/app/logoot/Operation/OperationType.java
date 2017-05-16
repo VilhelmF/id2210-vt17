@@ -1,3 +1,3 @@
-package se.kth.logoot.Operation;
+package se.kth.app.logoot.Operation;
 
 public enum OperationType {INSERT, DELETE}

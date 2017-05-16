@@ -1,6 +1,6 @@
-package se.kth.logoot.Operation;
+package se.kth.app.logoot.Operation;
 
-import se.kth.logoot.LineIdentifier;
+import se.kth.app.logoot.LineIdentifier;
 
 public class Operation {
 

@@ -1,4 +1,4 @@
-package se.kth.logoot;
+package se.kth.app.logoot;
 
 import java.util.List;
 

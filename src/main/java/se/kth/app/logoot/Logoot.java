@@ -1,11 +1,25 @@
-package se.kth.logoot;
+package se.kth.app.logoot;
+
+import se.kth.app.logoot.Operation.Operation;
+import se.kth.app.logoot.Operation.OperationType;
+import se.sics.kompics.ClassMatchedHandler;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.KompicsEvent;
+import se.sics.kompics.Positive;
+import se.sics.kompics.network.Network;
+import se.sics.ktoolbox.util.network.KContentMsg;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 
-public class Logoot {
+public class Logoot extends ComponentDefinition {
+
+    protected List<Patch> historyBuffer = new ArrayList<>();
+    protected List<LineIdentifier> identifierTable = new ArrayList<>();
+    protected final Positive<Network> net = requires(Network.class);
+
 
     /**
      * Generates N identifiers between the line identifier p and the line identifier q
@@ -20,6 +34,7 @@ public class Logoot {
         List<Position> positions = new ArrayList<>();
 
         int index = 0;
+
         int interval = 0;
 
         while (interval < N) {
@@ -58,19 +73,41 @@ public class Logoot {
                 s = site.getSiteID();
                 c = site.getClockValue() + 1;
             }
-            id = new Position(d, s, c);
+            id = new Position(d, s, c); //TODO
         }
 
         return id;
     }
 
-    public void execute() {
+    public void execute(Patch patch) {
+        for (Operation op : patch.getOperations()) {
+            if (op.getType().equals(OperationType.INSERT)) {
 
+            } else {
+
+            }
+        }
     }
 
-    public void deliver() {
+    protected final ClassMatchedHandler deliverPatchHandler
+            = new ClassMatchedHandler<Patch, KContentMsg<?, ?, Patch>>() {
 
-    }
+        @Override
+        public void handle(Patch content, KContentMsg<?, ?, Patch> container) {
+            execute(content);
+            historyBuffer.add(content);
+        }
+    };
+
+    protected final ClassMatchedHandler deliverUndoHandler
+            = new ClassMatchedHandler<Undo, KContentMsg<?, ?, Undo>>() {
+
+        @Override
+        public void handle(Undo content, KContentMsg<?, ?, Undo> container) {
+
+        }
+    };
+
 
     public int prefix(List<Position> positions, int index) {
         String digit = "";
@@ -87,4 +124,11 @@ public class Logoot {
         return Integer.parseInt(digit);
 
     }
+
+    {
+        subscribe(deliverPatchHandler, net);
+        subscribe(deliverUndoHandler, net);
+    }
+
+
 }

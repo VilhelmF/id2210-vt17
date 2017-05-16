@@ -1,15 +1,25 @@
-package se.kth.logoot;
+package se.kth.logoot.Operation;
 
-/**
- * Created by sindrikaldal on 16/05/17.
- */
-public class Delete implements Operation {
+import se.kth.logoot.LineIdentifier;
+
+public class Operation {
+
+    private OperationType type;
     private LineIdentifier id;
     private String content;
 
-    public Delete(LineIdentifier id, String content) {
+    public Operation(OperationType type, LineIdentifier id, String content) {
+        this.type = type;
         this.id = id;
         this.content = content;
+    }
+
+    public OperationType getType() {
+        return type;
+    }
+
+    public void setType(OperationType type) {
+        this.type = type;
     }
 
     public LineIdentifier getId() {

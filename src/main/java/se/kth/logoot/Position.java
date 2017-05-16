@@ -2,9 +2,6 @@ package se.kth.logoot;
 
 import se.kth.networking.NetAddress;
 
-/**
- * Created by sindrikaldal on 15/05/17.
- */
 public class Position {
 
     private int i;

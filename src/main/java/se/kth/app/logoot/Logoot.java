@@ -164,7 +164,7 @@ public class Logoot extends ComponentDefinition {
 
         int low = 0;
         int high = identifierTable.size() - 1;
-        
+
         while(low <= high ) {
             int middle = (low + high) / 2;
             if (identifier.compareTo(identifierTable.get(middle)) == 1){

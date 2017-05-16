@@ -4,7 +4,6 @@ import se.kth.app.logoot.Operation.Operation;
 import se.kth.app.logoot.Operation.OperationType;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.util.network.KContentMsg;
@@ -19,7 +18,7 @@ public class Logoot extends ComponentDefinition {
 
     protected HashMap<Integer, Patch> historyBuffer = new HashMap<>();
     protected List<LineIdentifier> identifierTable = new ArrayList<>();
-    protected HashMap<Integer, Integer> cemetary = new HashMap<>();
+    protected HashMap<Integer, Integer> cemetery = new HashMap<>();
     protected final Positive<Network> net = requires(Network.class);
 
 

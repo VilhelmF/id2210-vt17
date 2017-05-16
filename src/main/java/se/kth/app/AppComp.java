@@ -17,7 +17,6 @@
  */
 package se.kth.app;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
@@ -38,6 +37,7 @@ import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
 
+import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -58,6 +58,7 @@ public class AppComp extends ComponentDefinition {
   private KAddress selfAdr;
 
   private int messageCounter;
+  private HashMap<String, String> msgs;
 
   public AppComp(Init init) {
     selfAdr = init.selfAdr;
@@ -65,6 +66,7 @@ public class AppComp extends ComponentDefinition {
     LOG.info("{}initiating...", logPrefix);
 
     messageCounter = 1;
+    msgs = new HashMap<>();
     subscribe(handleStart, control);
     subscribe(handleCroupierSample, croupierPort);
     subscribe(handlePing, networkPort);
@@ -89,11 +91,17 @@ public class AppComp extends ComponentDefinition {
 
             // Test to send the sample to Gossiping Broadcast
             int randomNum = ThreadLocalRandom.current().nextInt(0, 101);
-            if(randomNum < 10) {
+            /*if(randomNum < 10) {
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} Sendig message:  " + messageId, logPrefix);
                 trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(selfAdr + " sending message: "
                         + messageCounter)), crb);
+                messageCounter++;
+            }*/
+            if(messageCounter < 10) {
+                String messageId = selfAdr.toString() + String.valueOf(messageCounter);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(String.valueOf(messageCounter))), crb);
+                LOG.info("{} Senging" + "ID: " + messageId + " Message: " + String.valueOf(messageCounter), logPrefix);
                 messageCounter++;
             }
             trigger(new CroupierMessage(croupierSample), gbeb);
@@ -112,7 +120,16 @@ public class AppComp extends ComponentDefinition {
 
       @Override
       public void handle(CRB_Deliver crb_deliver) {
-          LOG.info("{} received crb delivery: " + crb_deliver.id, logPrefix);
+          BroadcastMessage tst = (BroadcastMessage) crb_deliver.payload;
+          msgs.put(crb_deliver.id, tst.message);
+          LOG.info("{} received crb delivery." + "ID: " + crb_deliver.id + " Message: " + tst.message, logPrefix);
+          if(tst.message.equals("9")) {
+              for (String key : msgs.keySet()) {
+                  String msg = msgs.get(key);
+                  LOG.info("{} ID: " + key + " Message: " + msg);
+              }
+
+          }
       }
   };
 

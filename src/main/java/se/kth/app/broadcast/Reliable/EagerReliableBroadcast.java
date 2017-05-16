@@ -40,7 +40,7 @@ public class EagerReliableBroadcast extends ComponentDefinition {
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            LOG.info("{}Eager reliable broadcast STARTING...", logPrefix);
+            //LOG.info("{}Eager reliable broadcast STARTING...", logPrefix);
         }
     };
     protected final Handler<RB_Broadcast> rbBroadcastHandler = new Handler<RB_Broadcast>() {
@@ -56,9 +56,9 @@ public class EagerReliableBroadcast extends ComponentDefinition {
         @Override
         public void handle(GBEB_Deliver data) {
             CausalData causalData = (CausalData) data.payload;
-            LOG.info("{} Received the GBEB_DELIVER", logPrefix);
+            //LOG.info("{} Received the GBEB_DELIVER", logPrefix);
             if (!delivered.contains(causalData)) {
-                LOG.info("{} I don't ever reach this place, right?", logPrefix);
+                //LOG.info("{} I don't ever reach this place, right?", logPrefix);
                 delivered.add(causalData);
                 trigger(new RB_Deliver(data.id, data.src, causalData), rb);
                 trigger(new GBEB_Broadcast(data.id, data.src, new OriginatedData(selfAdr, causalData)), gbeb);

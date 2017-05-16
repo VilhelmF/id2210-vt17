@@ -2,7 +2,6 @@ package se.kth.app.broadcast.Causal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.app.broadcast.BroadcastMessage;
 import se.kth.app.broadcast.Reliable.RB_Broadcast;
 import se.kth.app.broadcast.Reliable.RB_Deliver;
 import se.kth.app.broadcast.Reliable.ReliableBroadcast;
@@ -48,19 +47,19 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
     protected final Handler<CRB_Broadcast> crbBroadcastHandler = new Handler<CRB_Broadcast>() {
         @Override
         public void handle(CRB_Broadcast crb_broadcast) {
-            //LOG.info("{} received the following message: " + crb_broadcast.payload, logPrefix);
+            LOG.info("{} received the following message: " + crb_broadcast.payload, logPrefix);
             HashMap<String, KompicsEvent> pastCopy = new HashMap<>(past);
             trigger(new RB_Broadcast(crb_broadcast.id, selfAdr, new CausalData(pastCopy, crb_broadcast.payload)), rb);
             past.put(crb_broadcast.id, crb_broadcast.payload);
-            BroadcastMessage test = (BroadcastMessage) past.get(crb_broadcast.id);
-            LOG.info("{} " + test.message, logPrefix);
+            //BroadcastMessage test = (BroadcastMessage) past.get(crb_broadcast.id);
+            //LOG.info("{} " + test.message, logPrefix);
         }
     };
 
     protected final Handler<RB_Deliver> rbDeliverHandler = new Handler<RB_Deliver>() {
         @Override
         public void handle(RB_Deliver rb_deliver) {
-            LOG.info("{} Delivery reached the causal order broadcast!", logPrefix);
+            //LOG.info("{} Delivery reached the causal order broadcast!", logPrefix);
             CausalData data = (CausalData) rb_deliver.payload;
             if (!delivered.contains(data.payload)) {
                 for (String key : data.past.keySet()) {
@@ -73,9 +72,11 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
                         }
                     }
                 }
-                LOG.info("{} Delivery triggered from current message :" + rb_deliver.id, logPrefix);
-                trigger(new CRB_Deliver(rb_deliver.id, data.payload), crb);
-                delivered.add(data.payload);
+                if(!delivered.contains(data.payload)) {
+                    LOG.info("{} Delivery triggered from current message :" + rb_deliver.id, logPrefix);
+                    trigger(new CRB_Deliver(rb_deliver.id, data.payload), crb);
+                    delivered.add(data.payload);
+                }
                 if (!past.containsKey(rb_deliver.id)) {
                     past.put(rb_deliver.id, data.payload);
                 }

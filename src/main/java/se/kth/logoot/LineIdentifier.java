@@ -9,6 +9,9 @@ public class LineIdentifier {
 
     private List<Position> positions;
 
+    public LineIdentifier() {
+    }
+
     public LineIdentifier(List<Position> positions) {
         this.positions = positions;
     }

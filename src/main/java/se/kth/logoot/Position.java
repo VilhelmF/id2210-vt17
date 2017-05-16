@@ -5,12 +5,16 @@ import se.kth.networking.NetAddress;
 public class Position {
 
     private int digit;
-    private NetAddress src;
+    private int siteID;
     private int clockValue;
 
-    public Position(int digit, NetAddress src, int clockValue) {
+    public Position() {
+
+    }
+
+    public Position(int digit, int siteID, int clockValue) {
         this.digit = digit;
-        this.src = src;
+        this.siteID = siteID;
         this.clockValue = clockValue;
     }
 
@@ -22,12 +26,12 @@ public class Position {
         this.digit = digit;
     }
 
-    public NetAddress getSrc() {
-        return src;
+    public int getSiteID() {
+        return siteID;
     }
 
-    public void setSrc(NetAddress src) {
-        this.src = src;
+    public void setSiteID(int siteID) {
+        this.siteID = siteID;
     }
 
     public int getClockValue() {

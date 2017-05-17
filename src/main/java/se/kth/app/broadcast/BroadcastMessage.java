@@ -16,4 +16,6 @@ public class BroadcastMessage implements KompicsEvent, Serializable {
     public BroadcastMessage(String message) {
         this.message = message;
     }
+
+
 }

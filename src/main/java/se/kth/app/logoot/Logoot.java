@@ -18,7 +18,7 @@ public class Logoot extends ComponentDefinition {
 
     protected HashMap<Integer, Patch> historyBuffer = new HashMap<>();
     protected List<LineIdentifier> identifierTable = new ArrayList<>();
-    protected HashMap<Integer, Integer> cemetery = new HashMap<>();
+    protected HashMap<LineIdentifier, Integer> cemetery = new HashMap<>();
     protected final Positive<Network> net = requires(Network.class);
 
 
@@ -83,12 +83,25 @@ public class Logoot extends ComponentDefinition {
     public void execute(Patch patch) {
         for (Operation op : patch.getOperations()) {
             if (op.getType().equals(OperationType.INSERT)) {
-                int degree = cemetery.get(op.getId());
+                int degree = cemetery.get(op.getId()) + 1;
                 if (degree == 1) {
+                    int position = positionBinarySearch(op.getId());
+                    //TODO document.insert
+                    //TODO idTable.insert(position, id);
 
+                } else {
+                    cemetery.put(op.getId(), degree);
                 }
             } else {
-
+                int position = positionBinarySearch(op.getId());
+                int degree = 0;
+                if (identifierTable.get(position).equals(op.getId())) {
+                    // TODO document.remove
+                    // TODO idT able.remove(position, id);
+                } else {
+                    degree = cemetery.get(op.getId()) - 1;
+                }
+                cemetery.put(op.getId(), degree);
             }
         }
     }

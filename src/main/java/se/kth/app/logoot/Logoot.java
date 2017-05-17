@@ -8,18 +8,39 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.util.network.KContentMsg;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 
 public class Logoot extends ComponentDefinition {
 
-    protected HashMap<Integer, Patch> historyBuffer = new HashMap<>();
-    protected List<LineIdentifier> identifierTable = new ArrayList<>();
-    protected HashMap<LineIdentifier, Integer> cemetery = new HashMap<>();
-    protected SortedMap<LineIdentifier, String> document = new TreeMap<>();
+    //*******************************CONNECTIONS********************************
     protected final Positive<Network> net = requires(Network.class);
+    //**************************************************************************
 
+
+    protected HashMap<Integer, Patch> historyBuffer;
+    protected List<LineIdentifier> identifierTable;
+    protected List<String> document;
+    protected HashMap<LineIdentifier, Integer> cemetery;
+
+
+    public Logoot() {
+        historyBuffer = new HashMap<>();
+        identifierTable = new ArrayList<>();
+        document = new ArrayList<>();
+        cemetery = new HashMap<>();
+
+        //Inserting <0,NA,NA> and <MAX,NA,NA> to mark beginning and end of document
+        LineIdentifier min = new LineIdentifier();
+        LineIdentifier max = new LineIdentifier();
+        min.addPosition(new Position(0,-1, -1));
+        max.addPosition(new Position(Integer.MAX_VALUE, -1, -1));
+        identifierTable.add(min);
+        identifierTable.add(max);
+    }
 
 
     /**
@@ -86,9 +107,8 @@ public class Logoot extends ComponentDefinition {
                 int degree = cemetery.get(op.getId()) + 1;
                 if (degree == 1) {
                     int position = positionBinarySearch(op.getId());
-                    //TODO document.insert
-                    //TODO idTable.insert(position, id);
-
+                    document.add(position, op.getContent());
+                    identifierTable.add(position, op.getId());
                 } else {
                     cemetery.put(op.getId(), degree);
                 }
@@ -96,8 +116,8 @@ public class Logoot extends ComponentDefinition {
                 int position = positionBinarySearch(op.getId());
                 int degree = 0;
                 if (identifierTable.get(position).equals(op.getId())) {
-                    // TODO document.remove
-                    // TODO idT able.remove(position, id);
+                    document.remove(position);
+                    document.remove(position);
                 } else {
                     degree = cemetery.get(op.getId()) - 1;
                 }
@@ -176,7 +196,7 @@ public class Logoot extends ComponentDefinition {
 
         int low = 0;
         int high = identifierTable.size() - 1;
-        int middles;
+        int middle;
 
         while(low <= high ) {
             middle = (low + high) / 2;
@@ -198,5 +218,17 @@ public class Logoot extends ComponentDefinition {
         subscribe(deliverRedoHandler, net);
     }
 
+    public void printDocument() {
+        for (String line : document) {
+            System.out.println(line);
+        }
+    }
+
+
+    public static void main(String[] args) {
+        System.out.println("Here we go!");
+        Logoot logoot = new Logoot();
+
+    }
 
 }

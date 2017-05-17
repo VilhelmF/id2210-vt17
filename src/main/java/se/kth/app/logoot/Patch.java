@@ -47,4 +47,25 @@ public class Patch {
     public void decrementDegree() {
         this.degree--;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Patch patch = (Patch) o;
+
+        if (id != patch.id) return false;
+        if (degree != patch.degree) return false;
+        return operations != null ? operations.equals(patch.operations) : patch.operations == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + (operations != null ? operations.hashCode() : 0);
+        result = 31 * result + degree;
+        return result;
+    }
 }

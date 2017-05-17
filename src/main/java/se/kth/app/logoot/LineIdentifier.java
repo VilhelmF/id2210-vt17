@@ -1,5 +1,7 @@
 package se.kth.app.logoot;
 
+import se.kth.app.logoot.Operation.Operation;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,5 +68,16 @@ public class LineIdentifier implements Comparable {
         }
 
         return this.positions.size() > other.positions.size() ? 1 : -1;
+    }
+
+    public String printPositions() {
+
+        StringBuilder str = new StringBuilder();
+
+        for (Position pos : this.positions) {
+            str.append("<" + pos.getDigit() + ", " + pos.getSiteID() + ", " + pos.getClockValue() + ">");
+        }
+
+        return str.toString();
     }
 }

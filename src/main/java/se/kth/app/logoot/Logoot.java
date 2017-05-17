@@ -29,6 +29,7 @@ public class Logoot extends ComponentDefinition {
     protected List<String> document;
     protected HashMap<LineIdentifier, Integer> cemetery;
     private static final Logger LOG = LoggerFactory.getLogger(Logoot.class);
+    private int BASE;
 
 
     public Logoot() {
@@ -36,12 +37,13 @@ public class Logoot extends ComponentDefinition {
         identifierTable = new ArrayList<>();
         document = new ArrayList<>();
         cemetery = new HashMap<>();
+        BASE = 100;
 
         //Inserting <0,NA,NA> and <MAX,NA,NA> to mark beginning and end of document
         LineIdentifier min = new LineIdentifier();
         LineIdentifier max = new LineIdentifier();
         min.addPosition(new Position(0,-1, -1));
-        max.addPosition(new Position(Integer.MAX_VALUE, -1, -1));
+        max.addPosition(new Position(BASE - 1, -1, -1));
         identifierTable.add(min);
         identifierTable.add(max);
     }
@@ -175,6 +177,15 @@ public class Logoot extends ComponentDefinition {
 
 
     public int prefix(List<Position> positions, int index) {
+        int digit = 0;
+        for(int i = 0; i < index; i++) {
+            digit *= BASE;
+            if(positions.size() > i) {
+                digit += positions.get(i).getDigit();
+            }
+        }
+        return digit;
+        /*
         String digit = Integer.toString(positions.get(0).getDigit());
 
         if (index < digit.length()) {

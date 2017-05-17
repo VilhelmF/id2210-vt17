@@ -8,9 +8,7 @@ import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.util.network.KContentMsg;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 
@@ -19,7 +17,9 @@ public class Logoot extends ComponentDefinition {
     protected HashMap<Integer, Patch> historyBuffer = new HashMap<>();
     protected List<LineIdentifier> identifierTable = new ArrayList<>();
     protected HashMap<LineIdentifier, Integer> cemetery = new HashMap<>();
+    protected SortedMap<LineIdentifier, String> document = new TreeMap<>();
     protected final Positive<Network> net = requires(Network.class);
+
 
 
     /**

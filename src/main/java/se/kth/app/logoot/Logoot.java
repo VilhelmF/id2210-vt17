@@ -286,11 +286,10 @@ public class Logoot extends ComponentDefinition {
         List<LineIdentifier> lol = logoot.getIdentifierTable();
         List<LineIdentifier> lineIdentifiers = logoot.generateLineID(lol.get(0), lol.get(1), 20, 10, new Position(1, vectorClock, site));
         vectorClock++;
+
         Collections.sort(lineIdentifiers);
         for (LineIdentifier identifier : lineIdentifiers) {
-            for (Position position : identifier.getPositions()) {
-                System.out.print("<" + position.getDigit() + ", " + position.getSiteID() + ", " + position.getClockValue() + ">");
-            }
+            identifier.printPositions();
             System.out.println();
         }
         List<Operation> operations = new ArrayList<>();
@@ -300,52 +299,48 @@ public class Logoot extends ComponentDefinition {
             operations.add(new Operation(OperationType.INSERT, li, lineText));
             lineNumber++;
         }
+
         Patch patch = new Patch(1, operations, 1);
         logoot.patch(patch);
-        for (String docLine : logoot.document) {
-            LOG.info(docLine);
-        }
+        logoot.printDocument();
 
         lineIdentifiers = logoot.generateLineID(lol.get(10), lol.get(11), 2, 10, new Position(2, vectorClock, site));
-        vectorClock++;
+
         Collections.sort(lineIdentifiers);
         operations = new ArrayList<>();
+
         for (LineIdentifier li : lineIdentifiers) {
             String lineText = "This is a new linenumber!!! " + lineNumber;
             operations.add(new Operation(OperationType.INSERT, li, lineText));
             lineNumber++;
         }
+
         patch = new Patch(2, operations, 1);
         logoot.patch(patch);
-        for (String docLine : logoot.document) {
-            LOG.info(docLine);
-        }
-        //lineIdentifiers = logoot.generateLineID(lol.get(1), lol.get(5), 2, 10, new Position(3, vectorClock, site));
+        logoot.printDocument();
+
         lineIdentifiers = new ArrayList<>();
         lineIdentifiers.add(logoot.identifierTable.get(3));
         lineIdentifiers.add(logoot.identifierTable.get(4));
         lineIdentifiers.add(logoot.identifierTable.get(5));
+
         Collections.sort(lineIdentifiers);
-        vectorClock++;
+
         operations = new ArrayList<>();
         for (LineIdentifier li : lineIdentifiers) {
-            int skita = logoot.positionBinarySearch(li);
-            LOG.info("PositionBinarySearch: " + skita);
-            operations.add(new Operation(OperationType.DELETE, li, logoot.document.get(skita-1)));
-            lineNumber++;
-        }
-        LOG.info("REMOVE DONE!!!");
-        patch = new Patch(3, operations, 1);
-        logoot.patch(patch);
-        for (String docLine : logoot.document) {
-            LOG.info(docLine);
+            int position = logoot.positionBinarySearch(li);
+            operations.add(new Operation(OperationType.DELETE, li, logoot.document.get(position - 1)));
         }
 
-        LOG.info("UNDO DONE!!!");
+        patch = new Patch(3, operations, 1);
+        logoot.patch(patch);
+        LOG.info("REMOVE DONE!!!");
+        logoot.printDocument();
+
+
         logoot.undo(new Undo(3));
-        for (String docLine : logoot.document) {
-            LOG.info(docLine);
-        }
+        LOG.info("UNDO DONE!!!");
+        logoot.printDocument();
 
     }
 

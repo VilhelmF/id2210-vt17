@@ -116,7 +116,6 @@ public class Logoot extends ComponentDefinition {
                     degree = cemetery.get(op.getId()) + 1;
                 }
                 if (degree == 1) {
-                    LOG.info("Rock on!")
                     int position = positionBinarySearch(op.getId());
                     document.add(position - 1, op.getContent());
                     identifierTable.add(position, op.getId());
@@ -323,16 +322,16 @@ public class Logoot extends ComponentDefinition {
         }
         //lineIdentifiers = logoot.generateLineID(lol.get(1), lol.get(5), 2, 10, new Position(3, vectorClock, site));
         lineIdentifiers = new ArrayList<>();
-        lineIdentifiers.add(logoot.identifierTable.get(3-1));
-        lineIdentifiers.add(logoot.identifierTable.get(4-1));
-        lineIdentifiers.add(logoot.identifierTable.get(5-1));
+        lineIdentifiers.add(logoot.identifierTable.get(3));
+        lineIdentifiers.add(logoot.identifierTable.get(4));
+        lineIdentifiers.add(logoot.identifierTable.get(5));
         Collections.sort(lineIdentifiers);
         vectorClock++;
         operations = new ArrayList<>();
         for (LineIdentifier li : lineIdentifiers) {
             int skita = logoot.positionBinarySearch(li);
             LOG.info("PositionBinarySearch: " + skita);
-            operations.add(new Operation(OperationType.DELETE, li, logoot.document.get(skita)));
+            operations.add(new Operation(OperationType.DELETE, li, logoot.document.get(skita-1)));
             lineNumber++;
         }
         LOG.info("REMOVE DONE!!!");

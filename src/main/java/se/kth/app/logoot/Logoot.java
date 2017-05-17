@@ -155,6 +155,12 @@ public class Logoot extends ComponentDefinition {
         }
     };
 
+    public void patch(Patch content) {
+        execute(content);
+        content.setDegree(1);
+        historyBuffer.put(content.getId(), content);
+    }
+
     protected final ClassMatchedHandler deliverUndoHandler
             = new ClassMatchedHandler<Undo, KContentMsg<?, ?, Undo>>() {
 
@@ -167,6 +173,14 @@ public class Logoot extends ComponentDefinition {
             }
         }
     };
+
+    public void undo(Undo content) {
+        Patch patch = historyBuffer.get(content.getPatchID());
+        patch.decrementDegree();
+        if (patch.getDegree() == 0) {
+            execute(inverse(patch));
+        }
+    }
 
     protected final ClassMatchedHandler deliverRedoHandler
             = new ClassMatchedHandler<Redo, KContentMsg<?, ?, Redo>>() {
@@ -239,7 +253,7 @@ public class Logoot extends ComponentDefinition {
 
         int low = 0;
         int high = identifierTable.size() - 1;
-        int middle = 0;
+        int middle;
 
         while(low <= high ) {
             middle = (low + high) / 2;
@@ -252,7 +266,7 @@ public class Logoot extends ComponentDefinition {
             }
         }
 
-        return middle;
+        return low;
     }
 
     {
@@ -295,7 +309,7 @@ public class Logoot extends ComponentDefinition {
             lineNumber++;
         }
         Patch patch = new Patch(1, operations, 1);
-        logoot.execute(patch);
+        logoot.patch(patch);
         for (String docLine : logoot.document) {
             LOG.info(docLine);
         }
@@ -310,25 +324,33 @@ public class Logoot extends ComponentDefinition {
             lineNumber++;
         }
         patch = new Patch(2, operations, 1);
-        logoot.execute(patch);
+        logoot.patch(patch);
         for (String docLine : logoot.document) {
             LOG.info(docLine);
         }
         //lineIdentifiers = logoot.generateLineID(lol.get(1), lol.get(5), 2, 10, new Position(3, vectorClock, site));
         lineIdentifiers = new ArrayList<>();
-        lineIdentifiers.add(logoot.identifierTable.get(3));
-        lineIdentifiers.add(logoot.identifierTable.get(4));
-        lineIdentifiers.add(logoot.identifierTable.get(5));
+        lineIdentifiers.add(logoot.identifierTable.get(3-1));
+        lineIdentifiers.add(logoot.identifierTable.get(4-1));
+        lineIdentifiers.add(logoot.identifierTable.get(5-1));
         Collections.sort(lineIdentifiers);
         vectorClock++;
         operations = new ArrayList<>();
         for (LineIdentifier li : lineIdentifiers) {
-            String lineText = "This is a new linenumber!!! " + lineNumber;
-            operations.add(new Operation(OperationType.DELETE, li, lineText));
+            int skita = logoot.positionBinarySearch(li);
+            LOG.info("PositionBinarySearch: " + skita);
+            operations.add(new Operation(OperationType.DELETE, li, logoot.document.get(skita)));
             lineNumber++;
         }
+        LOG.info("REMOVE DONE!!!");
         patch = new Patch(3, operations, 1);
-        logoot.execute(patch);
+        logoot.patch(patch);
+        for (String docLine : logoot.document) {
+            LOG.info(docLine);
+        }
+
+        LOG.info("UNDO DONE!!!");
+        logoot.undo(new Undo(3));
         for (String docLine : logoot.document) {
             LOG.info(docLine);
         }

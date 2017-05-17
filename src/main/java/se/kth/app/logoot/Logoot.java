@@ -1,5 +1,7 @@
 package se.kth.app.logoot;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.kth.app.logoot.Operation.Operation;
 import se.kth.app.logoot.Operation.OperationType;
 import se.sics.kompics.ClassMatchedHandler;
@@ -25,6 +27,7 @@ public class Logoot extends ComponentDefinition {
     protected List<LineIdentifier> identifierTable;
     protected List<String> document;
     protected HashMap<LineIdentifier, Integer> cemetery;
+    private static final Logger LOG = LoggerFactory.getLogger(Logoot.class);
 
 
     public Logoot() {
@@ -68,7 +71,7 @@ public class Logoot extends ComponentDefinition {
         int r = prefix(p.getPositions(), index);
 
         for (int i = 1; i <= N; i++) {
-            identifiers.add(constructID(r + ThreadLocalRandom.current().nextInt(1, step + 1), p, q, site));
+            identifiers.add(constructID(r + ThreadLocalRandom.current().nextInt(1, step), p, q, site));
             r += step;
         }
 
@@ -173,8 +176,9 @@ public class Logoot extends ComponentDefinition {
             } catch (IndexOutOfBoundsException e) {
                 digit += "0";
             }
+            LOG.info("Prefix at index " + i + " digit: " + digit);
         }
-
+        LOG.info("Prefix returns: " + digit);
         return Integer.parseInt(digit);
     }
 
@@ -224,10 +228,25 @@ public class Logoot extends ComponentDefinition {
         }
     }
 
+    public List<LineIdentifier> getIdentifierTable() {
+        return identifierTable;
+    }
+
 
     public static void main(String[] args) {
         System.out.println("Here we go!");
         Logoot logoot = new Logoot();
+        int vectorClock = 0;
+        int site = 1;
+        List<LineIdentifier> lol = logoot.getIdentifierTable();
+        List<LineIdentifier> lineIdentifiers = logoot.generateLineID(lol.get(0), lol.get(1), 20, 10, new Position(1, vectorClock, site));
+        vectorClock++;
+        for (LineIdentifier identifier : lineIdentifiers) {
+            for (Position position : identifier.getPositions()) {
+                System.out.print("<" + position.getDigit() + ", " + position.getSiteID() + ", " + position.getClockValue() + ">");
+            }
+            System.out.println();
+        }
 
     }
 

@@ -65,30 +65,28 @@ public class Position implements Comparable {
     public int compareTo(Object o) {
         Position other = (Position) o;
 
-        if (this.digit <= other.digit) {
-            if (this.digit < other.digit) {
+        // i1 < i2
+        if (this.digit < other.digit) {
+            return -1;
+        } else if (this.digit > other.digit) {
+            return 1;
+        } else if (this.digit == other.digit) {
+            // i1 == i2 && s1 < s2
+            if (this.siteID < other.siteID) {
                 return -1;
-            } else {
-                if (this.siteID <= other.siteID) {
-                    if (this.siteID < other.siteID) {
-                        return -1;
-                    } else {
-                        if (this.clockValue <= other.clockValue) {
-                            if (this.clockValue < other.clockValue) {
-                                return -1;
-                            } else {
-                                return 0;
-                            }
-                        } else {
-                            return 1;
-                        }
-                    }
-                } else {
+            } else if (this.siteID > other.siteID) {
+                return 1;
+            } else if (this.siteID == other.siteID) {
+                // i1 == i2 && s1 == s2 && c1 < c2
+                if (this.clockValue < other.clockValue) {
+                    return -1;
+                } else if (this.clockValue > other.clockValue) {
                     return 1;
+                } else if (this.clockValue == other.clockValue) {
+                    return 0;
                 }
             }
-        } else {
-            return 1;
         }
+        return 0;
     }
 }

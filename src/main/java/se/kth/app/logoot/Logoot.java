@@ -30,9 +30,9 @@ public class Logoot extends ComponentDefinition {
      * @param site
      * @return
      */
-    public LineIdentifier generateLineID(LineIdentifier p, LineIdentifier q, int N, int boundary, Position site) {
+    public List<LineIdentifier> generateLineID(LineIdentifier p, LineIdentifier q, int N, int boundary, Position site) {
 
-        List<Position> positions = new ArrayList<>();
+        List<LineIdentifier> identifiers = new ArrayList<>();
 
         int index = 0;
 
@@ -47,16 +47,16 @@ public class Logoot extends ComponentDefinition {
         int r = prefix(p.getPositions(), index);
 
         for (int i = 1; i <= N; i++) {
-            positions.add(constructID(r + ThreadLocalRandom.current().nextInt(1, step + 1), p, q, site));
+            identifiers.add(constructID(r + ThreadLocalRandom.current().nextInt(1, step + 1), p, q, site));
             r += step;
         }
 
-        return new LineIdentifier(positions);
+        return identifiers;
     }
 
-    public Position constructID(int r, LineIdentifier p, LineIdentifier q, Position site) {
+    public LineIdentifier constructID(int r, LineIdentifier p, LineIdentifier q, Position site) {
 
-        Position id = new Position();
+        LineIdentifier id = new LineIdentifier();
 
         int s, d, c;
 
@@ -74,7 +74,7 @@ public class Logoot extends ComponentDefinition {
                 s = site.getSiteID();
                 c = site.getClockValue() + 1;
             }
-            id = new Position(d, s, c); //TODO
+            id.addPosition(new Position(d, s, c)); //TODO
         }
 
         return id;

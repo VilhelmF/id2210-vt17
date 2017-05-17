@@ -1,5 +1,6 @@
 package se.kth.app.logoot;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,6 +11,7 @@ public class LineIdentifier implements Comparable {
     private List<Position> positions;
 
     public LineIdentifier() {
+        this.positions = new ArrayList<>();
     }
 
     public LineIdentifier(List<Position> positions) {
@@ -22,6 +24,10 @@ public class LineIdentifier implements Comparable {
 
     public void setPositions(List<Position> positions) {
         this.positions = positions;
+    }
+
+    public void addPosition(Position position) {
+        this.positions.add(position);
     }
 
     @Override

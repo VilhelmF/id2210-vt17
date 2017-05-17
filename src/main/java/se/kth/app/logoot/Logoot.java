@@ -29,7 +29,7 @@ public class Logoot extends ComponentDefinition {
     protected List<String> document;
     protected HashMap<LineIdentifier, Integer> cemetery;
     private static final Logger LOG = LoggerFactory.getLogger(Logoot.class);
-    private int BASE;
+    private final int BASE = 100;
 
 
     public Logoot() {
@@ -37,7 +37,6 @@ public class Logoot extends ComponentDefinition {
         identifierTable = new ArrayList<>();
         document = new ArrayList<>();
         cemetery = new HashMap<>();
-        BASE = 100;
 
         //Inserting <0,NA,NA> and <MAX,NA,NA> to mark beginning and end of document
         LineIdentifier min = new LineIdentifier();

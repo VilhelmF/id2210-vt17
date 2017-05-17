@@ -124,9 +124,16 @@ public class Logoot extends ComponentDefinition {
                     cemetery.put(op.getId(), degree);
                 }
             } else {
-                int position = positionBinarySearch(op.getId()) - 1;
+                int position = positionBinarySearch(op.getId());
                 int degree = 0;
-                LOG.info("idTable: " + identifierTable.get(position));
+                LineIdentifier li = identifierTable.get(position);
+                for (Position p : li.getPositions()) {
+                    LOG.info("identifierTable: <" + p.getDigit() + ", " + p.getSiteID() + ", " + p.getClockValue() + ">");
+                }
+                LineIdentifier t = op.getId();
+                for (Position p : t.getPositions()) {
+                    LOG.info("operation: <" + p.getDigit() + ", " + p.getSiteID() + ", " + p.getClockValue() + ">");
+                }
                 if (identifierTable.get(position).equals(op.getId())) {
                     document.remove(position);
                     identifierTable.remove(position);
@@ -233,7 +240,7 @@ public class Logoot extends ComponentDefinition {
 
         int low = 0;
         int high = identifierTable.size() - 1;
-        int middle;
+        int middle = 0;
 
         while(low <= high ) {
             middle = (low + high) / 2;
@@ -246,7 +253,7 @@ public class Logoot extends ComponentDefinition {
             }
         }
 
-        return low;
+        return middle;
     }
 
     {
@@ -296,6 +303,7 @@ public class Logoot extends ComponentDefinition {
 
         lineIdentifiers = logoot.generateLineID(lol.get(10), lol.get(12), 2, 10, new Position(2, vectorClock, site));
         vectorClock++;
+        Collections.sort(lineIdentifiers);
         operations = new ArrayList<>();
         for (LineIdentifier li : lineIdentifiers) {
             String lineText = "This is a new linenumber!!! " + lineNumber;
@@ -307,8 +315,12 @@ public class Logoot extends ComponentDefinition {
         for (String docLine : logoot.document) {
             LOG.info(docLine);
         }
-
-        lineIdentifiers = logoot.generateLineID(lol.get(1), lol.get(12), 2, 10, new Position(2, vectorClock, site));
+        //lineIdentifiers = logoot.generateLineID(lol.get(1), lol.get(5), 2, 10, new Position(3, vectorClock, site));
+        lineIdentifiers = new ArrayList<>();
+        lineIdentifiers.add(logoot.identifierTable.get(3));
+        lineIdentifiers.add(logoot.identifierTable.get(4));
+        lineIdentifiers.add(logoot.identifierTable.get(5));
+        Collections.sort(lineIdentifiers);
         vectorClock++;
         operations = new ArrayList<>();
         for (LineIdentifier li : lineIdentifiers) {

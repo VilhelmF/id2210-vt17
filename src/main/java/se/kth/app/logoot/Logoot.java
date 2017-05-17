@@ -11,6 +11,7 @@ import se.sics.kompics.network.Network;
 import se.sics.ktoolbox.util.network.KContentMsg;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -71,7 +72,7 @@ public class Logoot extends ComponentDefinition {
         int r = prefix(p.getPositions(), index);
 
         for (int i = 1; i <= N; i++) {
-            identifiers.add(constructID(r + ThreadLocalRandom.current().nextInt(1, step), p, q, site));
+            identifiers.add(constructID(r + ThreadLocalRandom.current().nextInt(1, step + 1), p, q, site));
             r += step;
         }
 
@@ -86,12 +87,12 @@ public class Logoot extends ComponentDefinition {
 
         String str = Integer.toString(r);
 
-        for (int i = 1; i < str.length(); i++) {
+        for (int i = 0; i < str.length(); i++) {
             d = Integer.parseInt(str.substring(i, i + 1));
-            if (d == p.getPositions().get(i).getDigit()) {
+            if (p.getPositions().size() < i && d == p.getPositions().get(i).getDigit()) {
                 s = p.getPositions().get(i).getSiteID();
                 c = p.getPositions().get(i).getClockValue();
-            } else if (d == p.getPositions().get(i).getDigit()) {
+            } else if (q.getPositions().size() < i && d == q.getPositions().get(i).getDigit()) {
                 s = q.getPositions().get(i).getSiteID();
                 c = q.getPositions().get(i).getClockValue();
             } else {
@@ -171,15 +172,15 @@ public class Logoot extends ComponentDefinition {
         String digit = Integer.toString(positions.get(0).getDigit());
 
         if (index < digit.length()) {
-            LOG.info("Prefix returns: " + digit);
-            return Integer.parseInt(digit.substring(index));
+            LOG.info("Prefix with index: " + index + " digit: " + digit.substring(0,index));
+            return Integer.parseInt(digit.substring(0, index));
         } else {
-            int diff = digit.length() - index;
+            int diff = index - digit.length();
 
             for (int i = 0; i < diff; i++) {
                 digit += "0";
             }
-            LOG.info("Prefix returns: " + digit);
+            LOG.info("Prefix with index: " + index + " digit: " + digit);
             return Integer.parseInt(digit);
         }
 
@@ -256,6 +257,7 @@ public class Logoot extends ComponentDefinition {
         List<LineIdentifier> lol = logoot.getIdentifierTable();
         List<LineIdentifier> lineIdentifiers = logoot.generateLineID(lol.get(0), lol.get(1), 20, 10, new Position(1, vectorClock, site));
         vectorClock++;
+        Collections.sort(lineIdentifiers);
         for (LineIdentifier identifier : lineIdentifiers) {
             for (Position position : identifier.getPositions()) {
                 System.out.print("<" + position.getDigit() + ", " + position.getSiteID() + ", " + position.getClockValue() + ">");

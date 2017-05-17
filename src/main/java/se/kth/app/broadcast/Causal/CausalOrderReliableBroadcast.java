@@ -72,11 +72,9 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
                         }
                     }
                 }
-                if(!delivered.contains(data.payload)) {
-                    LOG.info("{} Delivery triggered from current message :" + rb_deliver.id, logPrefix);
-                    trigger(new CRB_Deliver(rb_deliver.id, data.payload), crb);
-                    delivered.add(data.payload);
-                }
+                LOG.info("{} Delivery triggered from current message :" + rb_deliver.id, logPrefix);
+                trigger(new CRB_Deliver(rb_deliver.id, data.payload), crb);
+                delivered.add(data.payload);
                 if (!past.containsKey(rb_deliver.id)) {
                     past.put(rb_deliver.id, data.payload);
                 }
@@ -99,12 +97,6 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
             this.past = new HashMap<>();
         }
     }
-
-    {
-        subscribe(crbBroadcastHandler, crb);
-        subscribe(rbDeliverHandler, rb);
-    }
-
 
     {
         subscribe(handleStart, control);

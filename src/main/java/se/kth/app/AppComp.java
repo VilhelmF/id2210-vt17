@@ -85,6 +85,7 @@ public class AppComp extends ComponentDefinition {
     }
   };
 
+
   Handler handleCroupierSample = new Handler<CroupierSample>() {
         @Override
         public void handle(CroupierSample croupierSample) {

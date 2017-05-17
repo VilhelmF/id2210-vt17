@@ -168,8 +168,22 @@ public class Logoot extends ComponentDefinition {
 
 
     public int prefix(List<Position> positions, int index) {
-        String digit = "";
+        String digit = Integer.toString(positions.get(0).getDigit());
 
+        if (index < digit.length()) {
+            LOG.info("Prefix returns: " + digit);
+            return Integer.parseInt(digit.substring(index));
+        } else {
+            int diff = digit.length() - index;
+
+            for (int i = 0; i < diff; i++) {
+                digit += "0";
+            }
+            LOG.info("Prefix returns: " + digit);
+            return Integer.parseInt(digit);
+        }
+
+        /*
         for (int i = 0; i < index; i++) {
             try {
                 digit += Integer.toString(positions.get(i).getDigit());
@@ -178,8 +192,9 @@ public class Logoot extends ComponentDefinition {
             }
             LOG.info("Prefix at index " + i + " digit: " + digit);
         }
-        LOG.info("Prefix returns: " + digit);
+
         return Integer.parseInt(digit);
+        */
     }
 
     public Patch inverse(Patch patch) {

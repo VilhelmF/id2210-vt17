@@ -91,10 +91,10 @@ public class Logoot extends ComponentDefinition {
 
         for (int i = 0; i < str.length(); i++) {
             d = Integer.parseInt(str.substring(i, i + 1));
-            if (p.getPositions().size() < i && d == p.getPositions().get(i).getDigit()) {
+            if (p.getPositions().size() > i && d == p.getPositions().get(i).getDigit()) {
                 s = p.getPositions().get(i).getSiteID();
                 c = p.getPositions().get(i).getClockValue();
-            } else if (q.getPositions().size() < i && d == q.getPositions().get(i).getDigit()) {
+            } else if (q.getPositions().size() > i && d == q.getPositions().get(i).getDigit()) {
                 s = q.getPositions().get(i).getSiteID();
                 c = q.getPositions().get(i).getClockValue();
             } else {
@@ -117,6 +117,7 @@ public class Logoot extends ComponentDefinition {
                     degree = cemetery.get(op.getId()) + 1;
                 }
                 if (degree == 1) {
+                    LOG.info("Rock on!")
                     int position = positionBinarySearch(op.getId());
                     document.add(position - 1, op.getContent());
                     identifierTable.add(position, op.getId());
@@ -126,16 +127,8 @@ public class Logoot extends ComponentDefinition {
             } else {
                 int position = positionBinarySearch(op.getId());
                 int degree = 0;
-                LineIdentifier li = identifierTable.get(position);
-                for (Position p : li.getPositions()) {
-                    LOG.info("identifierTable: <" + p.getDigit() + ", " + p.getSiteID() + ", " + p.getClockValue() + ">");
-                }
-                LineIdentifier t = op.getId();
-                for (Position p : t.getPositions()) {
-                    LOG.info("operation: <" + p.getDigit() + ", " + p.getSiteID() + ", " + p.getClockValue() + ">");
-                }
                 if (identifierTable.get(position).equals(op.getId())) {
-                    document.remove(position);
+                    document.remove(position - 1);
                     identifierTable.remove(position);
                 } else {
                     degree = cemetery.get(op.getId()) - 1;
@@ -315,7 +308,7 @@ public class Logoot extends ComponentDefinition {
             LOG.info(docLine);
         }
 
-        lineIdentifiers = logoot.generateLineID(lol.get(10), lol.get(12), 2, 10, new Position(2, vectorClock, site));
+        lineIdentifiers = logoot.generateLineID(lol.get(10), lol.get(11), 2, 10, new Position(2, vectorClock, site));
         vectorClock++;
         Collections.sort(lineIdentifiers);
         operations = new ArrayList<>();

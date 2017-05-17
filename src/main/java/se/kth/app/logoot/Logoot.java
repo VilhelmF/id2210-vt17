@@ -108,20 +108,26 @@ public class Logoot extends ComponentDefinition {
     public void execute(Patch patch) {
         for (Operation op : patch.getOperations()) {
             if (op.getType().equals(OperationType.INSERT)) {
-                int degree = cemetery.get(op.getId()) + 1;
+                int degree;
+                if(!cemetery.containsKey(op.getId())){
+                    degree = 1;
+                } else {
+                    degree = cemetery.get(op.getId()) + 1;
+                }
                 if (degree == 1) {
                     int position = positionBinarySearch(op.getId());
-                    document.add(position, op.getContent());
+                    document.add(position - 1, op.getContent());
                     identifierTable.add(position, op.getId());
                 } else {
                     cemetery.put(op.getId(), degree);
                 }
             } else {
-                int position = positionBinarySearch(op.getId());
+                int position = positionBinarySearch(op.getId()) - 1;
                 int degree = 0;
+                LOG.info("idTable: " + identifierTable.get(position));
                 if (identifierTable.get(position).equals(op.getId())) {
                     document.remove(position);
-                    document.remove(position);
+                    identifierTable.remove(position);
                 } else {
                     degree = cemetery.get(op.getId()) - 1;
                 }
@@ -263,6 +269,46 @@ public class Logoot extends ComponentDefinition {
                 System.out.print("<" + position.getDigit() + ", " + position.getSiteID() + ", " + position.getClockValue() + ">");
             }
             System.out.println();
+        }
+        List<Operation> operations = new ArrayList<>();
+        int lineNumber = 1;
+        for (LineIdentifier li : lineIdentifiers) {
+            String lineText = "This is line number: " + lineNumber;
+            operations.add(new Operation(OperationType.INSERT, li, lineText));
+            lineNumber++;
+        }
+        Patch patch = new Patch(1, operations, 1);
+        logoot.execute(patch);
+        for (String docLine : logoot.document) {
+            LOG.info(docLine);
+        }
+
+        lineIdentifiers = logoot.generateLineID(lol.get(10), lol.get(12), 2, 10, new Position(2, vectorClock, site));
+        vectorClock++;
+        operations = new ArrayList<>();
+        for (LineIdentifier li : lineIdentifiers) {
+            String lineText = "This is a new linenumber!!! " + lineNumber;
+            operations.add(new Operation(OperationType.INSERT, li, lineText));
+            lineNumber++;
+        }
+        patch = new Patch(2, operations, 1);
+        logoot.execute(patch);
+        for (String docLine : logoot.document) {
+            LOG.info(docLine);
+        }
+
+        lineIdentifiers = logoot.generateLineID(lol.get(1), lol.get(12), 2, 10, new Position(2, vectorClock, site));
+        vectorClock++;
+        operations = new ArrayList<>();
+        for (LineIdentifier li : lineIdentifiers) {
+            String lineText = "This is a new linenumber!!! " + lineNumber;
+            operations.add(new Operation(OperationType.DELETE, li, lineText));
+            lineNumber++;
+        }
+        patch = new Patch(3, operations, 1);
+        logoot.execute(patch);
+        for (String docLine : logoot.document) {
+            LOG.info(docLine);
         }
 
     }

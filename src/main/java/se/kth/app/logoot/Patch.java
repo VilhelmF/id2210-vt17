@@ -39,4 +39,12 @@ public class Patch {
     public void setDegree(int degree) {
         this.degree = degree;
     }
+
+    public void incrementDegree() {
+        this.degree++;
+    }
+
+    public void decrementDegree() {
+        this.degree--;
+    }
 }

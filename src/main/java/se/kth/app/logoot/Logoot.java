@@ -123,7 +123,7 @@ public class Logoot extends ComponentDefinition {
         @Override
         public void handle(Undo content, KContentMsg<?, ?, Undo> container) {
             Patch patch = historyBuffer.get(content.getPatchID());
-            patch.setDegree(patch.getDegree() - 1);
+            patch.decrementDegree();
             if (patch.getDegree() == 0) {
                 execute(inverse(patch));
             }
@@ -136,7 +136,7 @@ public class Logoot extends ComponentDefinition {
         @Override
         public void handle(Redo content, KContentMsg<?, ?, Redo> container) {
             Patch patch = historyBuffer.get(content.getPatchID());
-            patch.setDegree(patch.getDegree() + 1);
+            patch.incrementDegree();
             if (patch.getDegree() == 1) {
                 execute(patch);
             }
@@ -176,9 +176,10 @@ public class Logoot extends ComponentDefinition {
 
         int low = 0;
         int high = identifierTable.size() - 1;
+        int middles;
 
         while(low <= high ) {
-            int middle = (low + high) / 2;
+            middle = (low + high) / 2;
             if (identifier.compareTo(identifierTable.get(middle)) == 1){
                 low = middle + 1;
             } else if (identifierTable.get(middle).compareTo(identifier) == 1) {
@@ -188,7 +189,7 @@ public class Logoot extends ComponentDefinition {
             }
         }
 
-        return 0;
+        return low;
     }
 
     {

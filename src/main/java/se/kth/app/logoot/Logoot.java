@@ -136,35 +136,11 @@ public class Logoot extends ComponentDefinition {
         }
     }
 
-    protected final ClassMatchedHandler deliverPatchHandler
-            = new ClassMatchedHandler<Patch, KContentMsg<?, ?, Patch>>() {
-
-        @Override
-        public void handle(Patch content, KContentMsg<?, ?, Patch> container) {
-            execute(content);
-            content.setDegree(1);
-            historyBuffer.put(content.getId(), content);
-        }
-    };
-
     public void patch(Patch content) {
         execute(content);
         content.setDegree(1);
         historyBuffer.put(content.getId(), content);
     }
-
-    protected final ClassMatchedHandler deliverUndoHandler
-            = new ClassMatchedHandler<Undo, KContentMsg<?, ?, Undo>>() {
-
-        @Override
-        public void handle(Undo content, KContentMsg<?, ?, Undo> container) {
-            Patch patch = historyBuffer.get(content.getPatchID());
-            patch.decrementDegree();
-            if (patch.getDegree() == 0) {
-                execute(inverse(patch));
-            }
-        }
-    };
 
     public void undo(Undo content) {
         Patch patch = historyBuffer.get(content.getPatchID());
@@ -174,19 +150,13 @@ public class Logoot extends ComponentDefinition {
         }
     }
 
-    protected final ClassMatchedHandler deliverRedoHandler
-            = new ClassMatchedHandler<Redo, KContentMsg<?, ?, Redo>>() {
-
-        @Override
-        public void handle(Redo content, KContentMsg<?, ?, Redo> container) {
-            Patch patch = historyBuffer.get(content.getPatchID());
-            patch.incrementDegree();
-            if (patch.getDegree() == 1) {
-                execute(patch);
-            }
+    public void redo(Redo content) {
+        Patch patch = historyBuffer.get(content.getPatchID());
+        patch.incrementDegree();
+        if (patch.getDegree() == 1) {
+            execute(patch);
         }
-    };
-
+    }
 
     public int prefix(List<Position> positions, int index) {
         int digit = 0;
@@ -197,34 +167,6 @@ public class Logoot extends ComponentDefinition {
             }
         }
         return digit;
-        /*
-        String digit = Integer.toString(positions.get(0).getDigit());
-
-        if (index < digit.length()) {
-            LOG.info("Prefix with index: " + index + " digit: " + digit.substring(0,index));
-            return Integer.parseInt(digit.substring(0, index));
-        } else {
-            int diff = index - digit.length();
-
-            for (int i = 0; i < diff; i++) {
-                digit += "0";
-            }
-            LOG.info("Prefix with index: " + index + " digit: " + digit);
-            return Integer.parseInt(digit);
-        }
-
-        /*
-        for (int i = 0; i < index; i++) {
-            try {
-                digit += Integer.toString(positions.get(i).getDigit());
-            } catch (IndexOutOfBoundsException e) {
-                digit += "0";
-            }
-            LOG.info("Prefix at index " + i + " digit: " + digit);
-        }
-
-        return Integer.parseInt(digit);
-        */
     }
 
     public Patch inverse(Patch patch) {
@@ -259,12 +201,6 @@ public class Logoot extends ComponentDefinition {
         }
 
         return low;
-    }
-
-    {
-        subscribe(deliverPatchHandler, net);
-        subscribe(deliverUndoHandler, net);
-        subscribe(deliverRedoHandler, net);
     }
 
     public void printDocument() {

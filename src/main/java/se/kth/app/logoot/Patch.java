@@ -1,10 +1,14 @@
 package se.kth.app.logoot;
 
 import se.kth.app.logoot.Operation.Operation;
+import se.sics.kompics.KompicsEvent;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Patch {
+public class Patch implements KompicsEvent, Serializable {
+
+    private static final long serialVersionUID = -5669431159047202367L;
 
     private int id;
     private List<Operation> operations;

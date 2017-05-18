@@ -25,6 +25,10 @@ import se.kth.app.broadcast.BroadcastMessage;
 import se.kth.app.broadcast.Causal.CRB_Broadcast;
 import se.kth.app.broadcast.Causal.CRB_Deliver;
 import se.kth.app.broadcast.Causal.CausalBroadcast;
+import se.kth.app.logoot.Logoot;
+import se.kth.app.logoot.Patch;
+import se.kth.app.logoot.Redo;
+import se.kth.app.logoot.Undo;
 import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
 import se.kth.networking.CroupierMessage;
@@ -62,9 +66,12 @@ public class AppComp extends ComponentDefinition {
   private int messageCounter;
   private HashMap<String, String> msgs;
   private ArrayList<String> quicktest;
+  private Logoot logoot;
 
   public AppComp(Init init) {
     selfAdr = init.selfAdr;
+    logoot = init.logoot;
+
     logPrefix = "<nid:" + selfAdr.getId() + ">";
     LOG.info("{}initiating...", logPrefix);
 
@@ -99,7 +106,7 @@ public class AppComp extends ComponentDefinition {
             if(messageCounter < 6) {
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} Sendig message:  " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(String.valueOf(messageCounter))), crb);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(null)), crb);
                 messageCounter++;
             }
             /*
@@ -125,7 +132,21 @@ public class AppComp extends ComponentDefinition {
 
       @Override
       public void handle(CRB_Deliver crb_deliver) {
-          BroadcastMessage tst = (BroadcastMessage) crb_deliver.payload;
+
+          BroadcastMessage broadcastMessage = (BroadcastMessage) crb_deliver.payload;
+          KompicsEvent payload = broadcastMessage.payload;
+
+          if (payload instanceof Patch) {
+              logoot.patch((Patch) payload);
+          } else if (payload instanceof Undo) {
+              logoot.undo((Undo) payload);
+          } else if (payload instanceof Redo) {
+              logoot.redo((Redo) payload);
+          }
+
+          logoot.printDocument();
+
+          /* BroadcastMessage tst = (BroadcastMessage) crb_deliver.payload;
           msgs.put(crb_deliver.id, tst.message);
           quicktest.add(tst.message);
           LOG.info("{} received crb delivery." + "ID: " + crb_deliver.id + " Message: " + tst.message, logPrefix);
@@ -140,8 +161,7 @@ public class AppComp extends ComponentDefinition {
                  LOG.info("{}  " + message, logPrefix);
               }
 
-
-          }
+*/
       }
   };
 
@@ -168,10 +188,12 @@ public class AppComp extends ComponentDefinition {
 
     public final KAddress selfAdr;
     public final Identifier gradientOId;
+    public final Logoot logoot;
 
-    public Init(KAddress selfAdr, Identifier gradientOId) {
+    public Init(KAddress selfAdr, Identifier gradientOId, Logoot logoot) {
       this.selfAdr = selfAdr;
       this.gradientOId = gradientOId;
+      this.logoot = logoot;
     }
   }
 }

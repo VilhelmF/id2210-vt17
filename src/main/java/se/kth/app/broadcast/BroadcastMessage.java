@@ -11,10 +11,10 @@ public class BroadcastMessage implements KompicsEvent, Serializable {
 
     private static final long serialVersionUID = -5669431156447202367L;
 
-    public final String message;
+    public final KompicsEvent payload;
 
-    public BroadcastMessage(String message) {
-        this.message = message;
+    public BroadcastMessage(KompicsEvent payload) {
+        this.payload = payload;
     }
 
 

@@ -135,15 +135,14 @@ public class Logoot extends ComponentDefinition {
     }
 
     public void patch(Patch content) {
-        Patch patch = new Patch(content.getId(), content.getOperations(),content.getDegree());
+        Patch patch = copyPatch(content);
         execute(patch);
         patch.setDegree(1);
         historyBuffer.put(patch.getId(), patch);
     }
 
     public void undo(Undo content) {
-        Patch newPatch = historyBuffer.get(content.getPatchID());
-        Patch patch = new Patch(newPatch.getId(), newPatch.getOperations(),newPatch.getDegree());
+        Patch patch = copyPatch(historyBuffer.get(content.getPatchID()));
         patch.decrementDegree();
         historyBuffer.put(patch.getId(), patch);
         if (patch.getDegree() == 0) {
@@ -152,8 +151,7 @@ public class Logoot extends ComponentDefinition {
     }
 
     public void redo(Redo content) {
-        Patch newPatch = historyBuffer.get(content.getPatchID());
-        Patch patch = new Patch(newPatch.getId(), newPatch.getOperations(),newPatch.getDegree());
+        Patch patch = copyPatch(historyBuffer.get(content.getPatchID()));
         patch.incrementDegree();
         if (patch.getDegree() == 1) {
             execute(patch);
@@ -174,18 +172,29 @@ public class Logoot extends ComponentDefinition {
 
     public Patch inverse(Patch patch) {
 
-        Patch inversePatch = new Patch(patch.getId(), new ArrayList<Operation>(), patch.getDegree());
+        Patch inversePatch = new Patch(patch.getId(), patch.getOperations(), patch.getDegree());
 
         for (Operation op : patch.getOperations()) {
-            Operation newOp = new Operation(op.getType(), op.getId(), op.getContent());
             if (op.getType().equals(OperationType.INSERT)) {
-                newOp.setType(OperationType.DELETE);
+                op.setType(OperationType.DELETE);
             } else {
-                newOp.setType(OperationType.INSERT);
+                op.setType(OperationType.INSERT);
             }
-            inversePatch.getOperations().add(newOp);
         }
         return inversePatch;
+    }
+
+    public Patch copyPatch(Patch patch) {
+        List<Operation> newOperations = new ArrayList<>();
+
+
+        for (Operation op : patch.getOperations()) {
+            Operation newOperation = new Operation(op.getType(), op.getId(), op.getContent());
+            newOperations.add(newOperation);
+        }
+
+
+        return new Patch(patch.getId(), newOperations, patch.getDegree());
     }
 
     public int positionBinarySearch(LineIdentifier identifier) {

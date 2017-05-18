@@ -61,7 +61,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
                 OriginatedData message = (OriginatedData) GBEB_broadcast.payload;
                 CausalData cd = (CausalData) message.payload;
                 BroadcastMessage broadcastMessage = (BroadcastMessage) cd.payload;
-                //LOG.info("{} Received the following message: " + broadcastMessage.message, logPrefix);
+                LOG.info("{} Received the following message: " + GBEB_broadcast.id + " " + broadcastMessage.payload, logPrefix);
                 past.put(GBEB_broadcast.id, GBEB_broadcast.payload);
             } catch (Exception e) {
                e.printStackTrace();

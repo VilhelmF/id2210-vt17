@@ -56,12 +56,14 @@ public class EagerReliableBroadcast extends ComponentDefinition {
         @Override
         public void handle(GBEB_Deliver data) {
             CausalData causalData = (CausalData) data.payload;
-            //LOG.info("{} Received the GBEB_DELIVER", logPrefix);
+            LOG.info("{} Received the GBEB_DELIVER" + " " + data.id, logPrefix);
             if (!delivered.contains(causalData)) {
-                //LOG.info("{} I don't ever reach this place, right?", logPrefix);
+                LOG.info("{} Sending ", logPrefix);
                 delivered.add(causalData);
                 trigger(new RB_Deliver(data.id, data.src, causalData), rb);
                 trigger(new GBEB_Broadcast(data.id, data.src, new OriginatedData(selfAdr, causalData)), gbeb);
+            } else {
+                LOG.info("{} You shall not pass!", logPrefix);
             }
         }
     };

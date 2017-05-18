@@ -60,7 +60,7 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
     protected final Handler<RB_Deliver> rbDeliverHandler = new Handler<RB_Deliver>() {
         @Override
         public void handle(RB_Deliver rb_deliver) {
-            //LOG.info("{} Delivery reached the causal order broadcast!", logPrefix);
+            LOG.info(("{} Delivery reached the causal order broadcast!" + " " + rb_deliver.id), logPrefix);
             CausalData data = (CausalData) rb_deliver.payload;
             if (!delivered.contains(data.payload)) {
                 for (String key : data.past.keySet()) {

@@ -2,6 +2,7 @@ package se.kth.app.broadcast.Causal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.app.broadcast.BroadcastMessage;
 import se.kth.app.broadcast.Reliable.RB_Broadcast;
 import se.kth.app.broadcast.Reliable.RB_Deliver;
 import se.kth.app.broadcast.Reliable.ReliableBroadcast;
@@ -26,7 +27,7 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
     protected final Negative<CausalBroadcast> crb = provides(CausalBroadcast.class);
 
     //***** Fields *******
-    private HashMap<String, KompicsEvent> past;
+    private HashMap<String, Past> past;
     private HashSet<KompicsEvent> delivered;
     private final KAddress selfAdr;
 
@@ -48,9 +49,9 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
         @Override
         public void handle(CRB_Broadcast crb_broadcast) {
             LOG.info("{} received the following message: " + crb_broadcast.payload, logPrefix);
-            HashMap<String, KompicsEvent> pastCopy = new HashMap<>(past);
+            HashMap<String, Past> pastCopy = new HashMap<>(past);
             trigger(new RB_Broadcast(crb_broadcast.id, selfAdr, new CausalData(pastCopy, crb_broadcast.payload)), rb);
-            past.put(crb_broadcast.id, crb_broadcast.payload);
+            past.put(crb_broadcast.id, new Past((BroadcastMessage) crb_broadcast.payload, crb_broadcast.src));
             //BroadcastMessage test = (BroadcastMessage) past.get(crb_broadcast.id);
             //LOG.info("{} " + test.message, logPrefix);
         }
@@ -63,20 +64,22 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
             CausalData data = (CausalData) rb_deliver.payload;
             if (!delivered.contains(data.payload)) {
                 for (String key : data.past.keySet()) {
-                    if (!delivered.contains(data.past.get(key))) {
-                        trigger(new CRB_Deliver(key, data.past.get(key)), crb);
+                    Past pastObject = data.past.get(key);
+                    BroadcastMessage broadcastMessage = pastObject.message;
+                    if (!delivered.contains(broadcastMessage)) {
+                        trigger(new CRB_Deliver(key, pastObject.src, broadcastMessage), crb);
                         LOG.info("{} Delivery triggered from past!: " + key, logPrefix);
-                        delivered.add(data.past.get(key));
+                        delivered.add(broadcastMessage);
                         if (!past.containsKey(key)) {
-                            past.put(key, data.past.get(key));
+                            past.put(key, pastObject);
                         }
                     }
                 }
                 LOG.info("{} Delivery triggered from current message :" + rb_deliver.id, logPrefix);
-                trigger(new CRB_Deliver(rb_deliver.id, data.payload), crb);
+                trigger(new CRB_Deliver(rb_deliver.id, rb_deliver.src, data.payload), crb);
                 delivered.add(data.payload);
                 if (!past.containsKey(rb_deliver.id)) {
-                    past.put(rb_deliver.id, data.payload);
+                    past.put(rb_deliver.id, new Past((BroadcastMessage) data.payload, rb_deliver.src));
                 }
             } else {
                 LOG.info("{} Contains the broadcast message!", logPrefix);
@@ -87,7 +90,7 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
 
     public static class Init extends se.sics.kompics.Init<CausalOrderReliableBroadcast> {
 
-        public HashMap<String, KompicsEvent> past;
+        public HashMap<String, Past> past;
         public HashSet<KompicsEvent> delivered;
         public final KAddress selfAdr;
 

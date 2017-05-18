@@ -99,7 +99,8 @@ public class AppComp extends ComponentDefinition {
             if(messageCounter < 6) {
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} Sendig message:  " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(String.valueOf(messageCounter))), crb);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(selfAdr.toString() + " sending "
+                        + String.valueOf(messageCounter))), crb);
                 messageCounter++;
             }
             /*
@@ -129,14 +130,13 @@ public class AppComp extends ComponentDefinition {
           msgs.put(crb_deliver.id, tst.message);
           quicktest.add(tst.message);
           LOG.info("{} received crb delivery." + "ID: " + crb_deliver.id + " Message: " + tst.message, logPrefix);
-          if(tst.message.equals("5")) {
+          if(tst.message.substring(tst.message.length()-1).equals("5")) {
               for (String key : msgs.keySet()) {
                   String msg = msgs.get(key);
                   LOG.info("{} ID: " + key + " Message: " + msg, logPrefix);
               }
               LOG.info("{} ___ ----- ____ ----- ___", logPrefix);
-              for (String message : quicktest
-                   ) {
+              for (String message : quicktest) {
                  LOG.info("{}  " + message, logPrefix);
               }
 

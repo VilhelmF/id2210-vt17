@@ -44,6 +44,7 @@ import se.sics.ktoolbox.util.network.KHeader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -66,6 +67,7 @@ public class AppComp extends ComponentDefinition {
   private HashMap<String, String> msgs;
   private ArrayList<String> quicktest;
   private Logoot logoot;
+  private int randomID;
 
   public AppComp(Init init) {
     selfAdr = init.selfAdr;
@@ -100,25 +102,35 @@ public class AppComp extends ComponentDefinition {
                 return;
             }
 
-            if(messageCounter < 2) {
+            if(messageCounter == 1) {
 
                 int vectorClock = 0;
                 int site = 1;
                 List<LineIdentifier> lineIdentifiers = logoot.getFirstLine(1, new Position(1, 1, vectorClock));
                 vectorClock++;
 
+                randomID = ThreadLocalRandom.current().nextInt(0,10000);
                 List<Operation> operations = new ArrayList<>();
                 for (LineIdentifier li : lineIdentifiers) {
                     String lineText = selfAdr.toString() + " Sending message!";
                     operations.add(new Operation(OperationType.INSERT, li, lineText));
                 }
-                Patch patch = new Patch(1, operations, 1);
+                Patch patch = new Patch(randomID, operations, 1);
                 logoot.patch(patch);
 
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} Sendig message:  " + messageId, logPrefix);
                 trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(patch)), crb);
 
+                messageCounter++;
+            }
+
+            if (messageCounter == 2 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
+                LOG.info("{} sending undo.", logPrefix);
+                Undo undo = new Undo(randomID);
+                logoot.undo(undo);
+                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(undo)), crb);
                 messageCounter++;
             }
 

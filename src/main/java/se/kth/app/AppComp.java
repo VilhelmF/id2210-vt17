@@ -25,10 +25,9 @@ import se.kth.app.broadcast.BroadcastMessage;
 import se.kth.app.broadcast.Causal.CRB_Broadcast;
 import se.kth.app.broadcast.Causal.CRB_Deliver;
 import se.kth.app.broadcast.Causal.CausalBroadcast;
-import se.kth.app.logoot.Logoot;
-import se.kth.app.logoot.Patch;
-import se.kth.app.logoot.Redo;
-import se.kth.app.logoot.Undo;
+import se.kth.app.logoot.*;
+import se.kth.app.logoot.Operation.Operation;
+import se.kth.app.logoot.Operation.OperationType;
 import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
 import se.kth.networking.CroupierMessage;
@@ -44,7 +43,7 @@ import se.sics.ktoolbox.util.network.KHeader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.List;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -101,14 +100,24 @@ public class AppComp extends ComponentDefinition {
                 return;
             }
 
+            if(messageCounter < 2) {
 
+                int vectorClock = 0;
+                int site = 1;
+                List<LineIdentifier> lineIdentifiers = logoot.getFirstLine(1, new Position(1, 1, vectorClock));
+                vectorClock++;
 
+                List<Operation> operations = new ArrayList<>();
+                for (LineIdentifier li : lineIdentifiers) {
+                    String lineText = selfAdr.toString() + " Sending message!";
+                    operations.add(new Operation(OperationType.INSERT, li, lineText));
+                }
+                Patch patch = new Patch(1, operations, 1);
+                logoot.patch(patch);
 
-
-            if(messageCounter < 6) {
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} Sendig message:  " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(null)), crb);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(patch)), crb);
 
                 messageCounter++;
             }
@@ -132,7 +141,7 @@ public class AppComp extends ComponentDefinition {
           } else if (payload instanceof Redo) {
               logoot.redo((Redo) payload);
           }
-
+          LOG.info("{} " + selfAdr.toString() + " printing my document!", logPrefix);
           logoot.printDocument();
       }
   };

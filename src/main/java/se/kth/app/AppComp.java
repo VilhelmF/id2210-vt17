@@ -101,8 +101,10 @@ public class AppComp extends ComponentDefinition {
                 return;
             }
 
-            // Test to send the sample to Gossiping Broadcast
-            int randomNum = ThreadLocalRandom.current().nextInt(0, 101);
+
+
+
+
             if(messageCounter < 6) {
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} Sendig message:  " + messageId, logPrefix);
@@ -160,10 +162,10 @@ public class AppComp extends ComponentDefinition {
     public final Identifier gradientOId;
     public final Logoot logoot;
 
-    public Init(KAddress selfAdr, Identifier gradientOId, Logoot logoot) {
+    public Init(KAddress selfAdr, Identifier gradientOId) {
       this.selfAdr = selfAdr;
       this.gradientOId = gradientOId;
-      this.logoot = logoot;
+      this.logoot = new Logoot();
     }
   }
 }

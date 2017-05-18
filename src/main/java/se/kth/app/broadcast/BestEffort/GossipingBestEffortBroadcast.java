@@ -119,10 +119,8 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
         }
     };
 
-    public HashMap<String, KompicsEvent> difference(HashMap history, HashMap past) {
+    public HashMap<String, KompicsEvent> difference(HashMap<String, KompicsEvent> history, HashMap<String, KompicsEvent> past) {
         HashMap<String, KompicsEvent> unseen = new HashMap<>();
-        //LOG.info("{}Size of history: " + history.size(), logPrefix);
-        //LOG.info("{}Size of past: " + past.size(), logPrefix);
         unseen.putAll(history);
         unseen.putAll(past);
         unseen.keySet().removeAll(past.keySet());

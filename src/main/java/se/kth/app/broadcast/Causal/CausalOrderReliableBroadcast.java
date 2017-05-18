@@ -68,11 +68,13 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
                     BroadcastMessage broadcastMessage = pastObject.message;
                     if (!delivered.contains(broadcastMessage)) {
                         trigger(new CRB_Deliver(key, pastObject.src, broadcastMessage), crb);
-                        LOG.info("{} Delivery triggered from past!: " + key, logPrefix);
+                        LOG.info("{} Delivery triggered from past!: " + key + " Src : " + pastObject.src, logPrefix);
                         delivered.add(broadcastMessage);
                         if (!past.containsKey(key)) {
                             past.put(key, pastObject);
                         }
+                    } else {
+                        LOG.info("Bruuh: " + pastObject.src);
                     }
                 }
                 LOG.info("{} Delivery triggered from current message :" + rb_deliver.id, logPrefix);

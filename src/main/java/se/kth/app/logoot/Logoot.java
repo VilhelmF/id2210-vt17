@@ -54,7 +54,7 @@ public class Logoot extends ComponentDefinition {
      * @param site
      * @return
      */
-    public List<LineIdentifier> generateLineID(LineIdentifier p, LineIdentifier q, int N, int boundary, Position site) {
+    public List<LineIdentifier> generateLineID(LineIdentifier p, LineIdentifier q, int N, int boundary, Site site) {
 
         List<LineIdentifier> identifiers = new ArrayList<>();
 
@@ -78,7 +78,7 @@ public class Logoot extends ComponentDefinition {
         return identifiers;
     }
 
-    public LineIdentifier constructID(int r, LineIdentifier p, LineIdentifier q, Position site) {
+    public LineIdentifier constructID(int r, LineIdentifier p, LineIdentifier q, Site site) {
 
         LineIdentifier id = new LineIdentifier();
 
@@ -95,8 +95,8 @@ public class Logoot extends ComponentDefinition {
                 s = q.getPositions().get(i).getSiteID();
                 c = q.getPositions().get(i).getClockValue();
             } else {
-                s = site.getSiteID();
-                c = site.getClockValue() + 1;
+                s = site.getId();
+                c = site.getClock() + 1;
             }
             id.addPosition(new Position(d, s, c)); //TODO
         }
@@ -136,27 +136,32 @@ public class Logoot extends ComponentDefinition {
 
     public void patch(Patch content) {
         Patch patch = copyPatch(content);
-        execute(patch);
         patch.setDegree(1);
+        execute(patch);
         historyBuffer.put(patch.getId(), patch);
+
+
     }
 
     public void undo(Undo content) {
         Patch patch = copyPatch(historyBuffer.get(content.getPatchID()));
         patch.decrementDegree();
-        historyBuffer.put(patch.getId(), patch);
+
         if (patch.getDegree() == 0) {
             execute(inverse(patch));
         }
+        historyBuffer.put(patch.getId(), patch);
     }
 
     public void redo(Redo content) {
         Patch patch = copyPatch(historyBuffer.get(content.getPatchID()));
         patch.incrementDegree();
+
         if (patch.getDegree() == 1) {
             execute(patch);
         }
         historyBuffer.put(patch.getId(), patch);
+
     }
 
     public int prefix(List<Position> positions, int index) {
@@ -172,14 +177,16 @@ public class Logoot extends ComponentDefinition {
 
     public Patch inverse(Patch patch) {
 
-        Patch inversePatch = new Patch(patch.getId(), patch.getOperations(), patch.getDegree());
+        Patch inversePatch = new Patch(patch.getId(), new ArrayList<Operation>(), patch.getDegree());
 
         for (Operation op : patch.getOperations()) {
+            Operation newOp = new Operation(op.getType(), op.getId(), op.getContent());
             if (op.getType().equals(OperationType.INSERT)) {
-                op.setType(OperationType.DELETE);
+                newOp.setType(OperationType.DELETE);
             } else {
-                op.setType(OperationType.INSERT);
+                newOp.setType(OperationType.INSERT);
             }
+            inversePatch.getOperations().add(newOp);
         }
         return inversePatch;
     }
@@ -192,7 +199,6 @@ public class Logoot extends ComponentDefinition {
             Operation newOperation = new Operation(op.getType(), op.getId(), op.getContent());
             newOperations.add(newOperation);
         }
-
 
         return new Patch(patch.getId(), newOperations, patch.getDegree());
     }
@@ -227,18 +233,18 @@ public class Logoot extends ComponentDefinition {
         return identifierTable;
     }
 
-    public List<LineIdentifier> getLineIdentifier(int startLine, int endLine, int lineCount, Position position) {
+    public List<LineIdentifier> getLineIdentifier(int startLine, int endLine, int lineCount, Site site) {
         return generateLineID(identifierTable.get(startLine), identifierTable.get(endLine), lineCount,
-                10, position);
+                10, site);
     }
 
-    public List<LineIdentifier> getFirstLine(int lineCount, Position position) {
-        return getLineIdentifier(0, 1, lineCount, position);
+    public List<LineIdentifier> getFirstLine(int lineCount, Site site) {
+        return getLineIdentifier(0, 1, lineCount, site);
     }
 
-    public List<LineIdentifier> getLastLine(int lineCount, Position position) {
+    public List<LineIdentifier> getLastLine(int lineCount, Site site) {
         int identifierTableSize = identifierTable.size();
-        return getLineIdentifier(identifierTableSize - 2, identifierTableSize - 1, lineCount, position);
+        return getLineIdentifier(identifierTableSize - 2, identifierTableSize - 1, lineCount, site);
     }
 
 
@@ -249,7 +255,7 @@ public class Logoot extends ComponentDefinition {
         int vectorClock = 0;
         int site = 1;
         List<LineIdentifier> lol = logoot.getIdentifierTable();
-        List<LineIdentifier> lineIdentifiers = logoot.generateLineID(lol.get(0), lol.get(1), 20, 10, new Position(1, vectorClock, site));
+        List<LineIdentifier> lineIdentifiers = logoot.generateLineID(lol.get(0), lol.get(1), 20, 10, new Site(vectorClock, site));
         vectorClock++;
 
         Collections.sort(lineIdentifiers);
@@ -269,7 +275,7 @@ public class Logoot extends ComponentDefinition {
         logoot.patch(patch);
         logoot.printDocument();
 
-        lineIdentifiers = logoot.generateLineID(lol.get(10), lol.get(11), 2, 10, new Position(2, vectorClock, site));
+        lineIdentifiers = logoot.generateLineID(lol.get(10), lol.get(11), 2, 10, new Site(vectorClock, site));
 
         Collections.sort(lineIdentifiers);
         operations = new ArrayList<>();

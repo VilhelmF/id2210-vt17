@@ -17,4 +17,23 @@ public class OriginatedData implements KompicsEvent, Serializable {
         this.src = src;
         this.payload = payload;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        OriginatedData that = (OriginatedData) o;
+
+        if (src != null ? !src.equals(that.src) : that.src != null) return false;
+        return payload != null ? payload.equals(that.payload) : that.payload == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = src != null ? src.hashCode() : 0;
+        result = 31 * result + (payload != null ? payload.hashCode() : 0);
+        return result;
+    }
 }

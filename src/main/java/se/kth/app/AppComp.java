@@ -110,6 +110,7 @@ public class AppComp extends ComponentDefinition {
                 vectorClock++;
 
                 randomID = ThreadLocalRandom.current().nextInt(0,10000);
+                LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
                 List<Operation> operations = new ArrayList<>();
                 for (LineIdentifier li : lineIdentifiers) {
                     String lineText = selfAdr.toString() + " Sending message!";
@@ -123,13 +124,12 @@ public class AppComp extends ComponentDefinition {
                 trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(patch)), crb);
 
                 messageCounter++;
-            }
-
-            if (messageCounter == 2 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
+            } else if (messageCounter == 2 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
                 LOG.info("{} sending undo.", logPrefix);
                 Undo undo = new Undo(randomID);
                 logoot.undo(undo);
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
+                LOG.info("{} ID: " + messageId, logPrefix);
                 trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(undo)), crb);
                 messageCounter++;
             }
@@ -147,8 +147,11 @@ public class AppComp extends ComponentDefinition {
           KompicsEvent payload = broadcastMessage.payload;
 
           if (payload instanceof Patch) {
+              LOG.info("{} Received a patch from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
               logoot.patch((Patch) payload);
           } else if (payload instanceof Undo) {
+              LOG.info("{} Received a undo from: " + crb_deliver.src, logPrefix);
+              LOG.info("{} Received a undo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
               logoot.undo((Undo) payload);
           } else if (payload instanceof Redo) {
               logoot.redo((Redo) payload);

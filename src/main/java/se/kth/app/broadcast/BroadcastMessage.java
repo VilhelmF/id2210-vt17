@@ -17,5 +17,19 @@ public class BroadcastMessage implements KompicsEvent, Serializable {
         this.payload = payload;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        BroadcastMessage that = (BroadcastMessage) o;
+
+        return payload != null ? payload.equals(that.payload) : that.payload == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return payload != null ? payload.hashCode() : 0;
+    }
 }

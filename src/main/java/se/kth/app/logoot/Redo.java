@@ -24,4 +24,20 @@ public class Redo implements KompicsEvent, Serializable {
     public void setPatchID(int patchID) {
         this.patchID = patchID;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Redo redo = (Redo) o;
+
+        return patchID == redo.patchID;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return patchID;
+    }
 }

@@ -19,4 +19,25 @@ public class CRB_Broadcast implements KompicsEvent, Serializable {
         this.src = src;
         this.payload = payload;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CRB_Broadcast that = (CRB_Broadcast) o;
+
+        if (src != null ? !src.equals(that.src) : that.src != null) return false;
+        if (payload != null ? !payload.equals(that.payload) : that.payload != null) return false;
+        return id != null ? id.equals(that.id) : that.id == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = src != null ? src.hashCode() : 0;
+        result = 31 * result + (payload != null ? payload.hashCode() : 0);
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        return result;
+    }
 }

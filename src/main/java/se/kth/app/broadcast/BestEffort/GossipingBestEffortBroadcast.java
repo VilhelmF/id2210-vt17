@@ -61,7 +61,6 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
                 OriginatedData message = (OriginatedData) GBEB_broadcast.payload;
                 CausalData cd = (CausalData) message.payload;
                 BroadcastMessage broadcastMessage = (BroadcastMessage) cd.payload;
-                //LOG.info("{} Received the following message: " + broadcastMessage.message, logPrefix);
                 past.put(GBEB_broadcast.id, GBEB_broadcast.payload);
             } catch (Exception e) {
                e.printStackTrace();
@@ -119,10 +118,8 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
         }
     };
 
-    public HashMap<String, KompicsEvent> difference(HashMap history, HashMap past) {
+    public HashMap<String, KompicsEvent> difference(HashMap<String, KompicsEvent> history, HashMap<String, KompicsEvent> past) {
         HashMap<String, KompicsEvent> unseen = new HashMap<>();
-        //LOG.info("{}Size of history: " + history.size(), logPrefix);
-        //LOG.info("{}Size of past: " + past.size(), logPrefix);
         unseen.putAll(history);
         unseen.putAll(past);
         unseen.keySet().removeAll(past.keySet());

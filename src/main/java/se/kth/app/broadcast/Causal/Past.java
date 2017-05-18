@@ -19,4 +19,22 @@ public class Past implements Serializable {
         this.src = src;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Past past = (Past) o;
+
+        if (message != null ? !message.equals(past.message) : past.message != null) return false;
+        return src != null ? src.equals(past.src) : past.src == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = message != null ? message.hashCode() : 0;
+        result = 31 * result + (src != null ? src.hashCode() : 0);
+        return result;
+    }
 }

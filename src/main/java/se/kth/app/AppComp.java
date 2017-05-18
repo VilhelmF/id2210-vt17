@@ -102,14 +102,16 @@ public class AppComp extends ComponentDefinition {
                 return;
             }
 
+            trigger(new CroupierMessage(croupierSample), gbeb);
+
             if(messageCounter == 1) {
 
                 int vectorClock = 0;
                 int site = 1;
-                List<LineIdentifier> lineIdentifiers = logoot.getFirstLine(1, new Position(1, selfAdr.hashCode(), vectorClock));
+                List<LineIdentifier> lineIdentifiers = logoot.getFirstLine(1, new Site(selfAdr.getId().hashCode(), vectorClock));
                 vectorClock++;
 
-                randomID = ThreadLocalRandom.current().nextInt(0,10000);
+                randomID = ThreadLocalRandom.current().nextInt(0,Integer.MAX_VALUE);
                 LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
                 List<Operation> operations = new ArrayList<>();
                 for (LineIdentifier li : lineIdentifiers) {
@@ -143,8 +145,6 @@ public class AppComp extends ComponentDefinition {
                 logoot.redo(redo);
                 messageCounter++;
             }
-
-            trigger(new CroupierMessage(croupierSample), gbeb);
     }
   };
 
@@ -156,16 +156,31 @@ public class AppComp extends ComponentDefinition {
           BroadcastMessage broadcastMessage = (BroadcastMessage) crb_deliver.payload;
           KompicsEvent payload = broadcastMessage.payload;
 
+
+         if (crb_deliver.src.equals(selfAdr)) {
+             LOG.info("{} Received a message from myself", logPrefix);
+             return;
+          } else {
+             LOG.info("{} Did not receive a message from myself", logPrefix);
+         }
+
           if (payload instanceof Patch) {
               LOG.info("{} Received a patch from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
+              //LOG.info("{} Document Before : ");
+              //logoot.printDocument();
               logoot.patch((Patch) payload);
           } else if (payload instanceof Undo) {
               LOG.info("{} Received a undo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
+              //LOG.info("{} Document Before : ");
+              //logoot.printDocument();
               logoot.undo((Undo) payload);
           } else if (payload instanceof Redo) {
+              LOG.info("{} Received a redo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
+              //LOG.info("{} Document Before : ");
+              //logoot.printDocument();
               logoot.redo((Redo) payload);
           }
-          LOG.info("{} " + selfAdr.toString() + " printing my document!", logPrefix);
+          LOG.info("{} Document after", logPrefix);
           logoot.printDocument();
       }
   };

@@ -26,8 +26,9 @@ public class OriginatedData implements KompicsEvent, Serializable {
         OriginatedData that = (OriginatedData) o;
 
         if (src != null ? !src.equals(that.src) : that.src != null) return false;
-        return payload != null ? payload.equals(that.payload) : that.payload == null;
+        if (payload != null ? !payload.equals(that.payload) : that.payload != null) return false;
 
+        return true;
     }
 
     @Override

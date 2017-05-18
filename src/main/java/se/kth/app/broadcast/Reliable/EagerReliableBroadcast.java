@@ -40,30 +40,24 @@ public class EagerReliableBroadcast extends ComponentDefinition {
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            //LOG.info("{}Eager reliable broadcast STARTING...", logPrefix);
+            delivered = new HashSet<>();
         }
     };
     protected final Handler<RB_Broadcast> rbBroadcastHandler = new Handler<RB_Broadcast>() {
 
         @Override
         public void handle(RB_Broadcast broadcastMessage) {
-            trigger(new GBEB_Broadcast(broadcastMessage.id, broadcastMessage.src,
-                    new OriginatedData(selfAdr, broadcastMessage.payload)), gbeb);
+            trigger(new GBEB_Broadcast(broadcastMessage.id, selfAdr, broadcastMessage.payload), gbeb);
         }
     };
 
     protected final Handler<GBEB_Deliver> gbebDeliverHandler = new Handler<GBEB_Deliver>() {
         @Override
         public void handle(GBEB_Deliver data) {
-            CausalData causalData = (CausalData) data.payload;
-            LOG.info("{} Received the GBEB_DELIVER" + " " + data.id, logPrefix);
-            if (!delivered.contains(causalData)) {
-                LOG.info("{} Sending ", logPrefix);
-                delivered.add(causalData);
-                trigger(new RB_Deliver(data.id, data.src, causalData), rb);
-                trigger(new GBEB_Broadcast(data.id, data.src, new OriginatedData(selfAdr, causalData)), gbeb);
-            } else {
-                LOG.info("{} You shall not pass!", logPrefix);
+            if (!delivered.contains(data.payload)) {
+                delivered.add(data.payload);
+                trigger(new RB_Deliver(data.id, data.src, data.payload), rb);
+                trigger(new GBEB_Broadcast(data.id, data.src, data.payload), gbeb);
             }
         }
     };

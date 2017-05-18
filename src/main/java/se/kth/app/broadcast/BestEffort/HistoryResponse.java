@@ -23,8 +23,9 @@ public class HistoryResponse implements KompicsEvent, Serializable {
 
         HistoryResponse that = (HistoryResponse) o;
 
-        return history != null ? history.equals(that.history) : that.history == null;
+        if (history != null ? !history.equals(that.history) : that.history != null) return false;
 
+        return true;
     }
 
     @Override

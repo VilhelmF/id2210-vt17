@@ -68,6 +68,7 @@ public class AppComp extends ComponentDefinition {
   private ArrayList<String> quicktest;
   private Logoot logoot;
   private int randomID;
+  public int messagesReceived = 0;
 
   public AppComp(Init init) {
     selfAdr = init.selfAdr;
@@ -98,27 +99,10 @@ public class AppComp extends ComponentDefinition {
         @Override
         public void handle(CroupierSample croupierSample) {
 
-            if (croupierSample.publicSample.isEmpty()) {
-                return;
-            }
-
-            trigger(new CroupierMessage(croupierSample), gbeb);
-
-            int randomNum = ThreadLocalRandom.current().nextInt(0, 101);
-            if(messageCounter < 6) {
-                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-                LOG.info("{} Sendig message:  " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(selfAdr.toString() + " sending "
-                        + String.valueOf(messageCounter))), crb);
-                messageCounter++;
-            }
-
-            /*if(messageCounter == 1) {
+            if(messageCounter == 1) {
 
                 int vectorClock = 0;
-                int site = 1;
                 List<LineIdentifier> lineIdentifiers = logoot.getFirstLine(1, new Site(selfAdr.getId().hashCode(), vectorClock));
-                vectorClock++;
 
                 randomID = ThreadLocalRandom.current().nextInt(0,Integer.MAX_VALUE);
                 LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
@@ -132,7 +116,6 @@ public class AppComp extends ComponentDefinition {
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} Sending message:  " + messageId, logPrefix);
                 trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(patch)), crb);
-                logoot.patch(patch);
 
                 messageCounter++;
             } else if (messageCounter == 2 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
@@ -142,38 +125,19 @@ public class AppComp extends ComponentDefinition {
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} ID: " + messageId, logPrefix);
                 trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(undo)), crb);
-                logoot.undo(undo);
                 messageCounter++;
+
             } else if (messageCounter == 3 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
                 LOG.info("{} sending redo.", logPrefix);
-                //Redo redo = new Redo(randomID);
+                Redo redo = new Redo(randomID);
 
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} ID: " + messageId, logPrefix);
-                //trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(redo)), crb);
-                //logoot.redo(redo);
-                //messageCounter++;
-
-                randomID = ThreadLocalRandom.current().nextInt(0,10000);
-                String stringAdr = selfAdr.toString();
-                //randomID = Integer.parseInt(stringAdr.substring(stringAdr.length()-2, stringAdr.length()-1));
-                //LOG.info("{} " + " randomvalue " + String.valueOf(randomID), logPrefix);
-                List<LineIdentifier> lineIdentifiers = logoot.getLastLine(1, new Site(selfAdr.getId().hashCode(), 3));
-                List<Operation> operations = new ArrayList<>();
-                for (LineIdentifier li : lineIdentifiers) {
-                    String lineText = selfAdr.toString() + " second message!";
-                    operations.add(new Operation(OperationType.INSERT, li, lineText));
-                }
-                Patch patch = new Patch(randomID, operations, 1);
-
-                messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-                LOG.info("{} Sending message:  " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(patch)), crb);
-                logoot.patch(patch);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(redo)), crb);
 
                 messageCounter++;
             }
-            */
+
     }
   };
 
@@ -182,50 +146,21 @@ public class AppComp extends ComponentDefinition {
       @Override
       public void handle(CRB_Deliver crb_deliver) {
 
-          BroadcastMessage tst = (BroadcastMessage) crb_deliver.payload;
-          if(crb_deliver.src.equals(selfAdr)) {
-              LOG.info("{} Received a message from self!", logPrefix);
-          }
-          msgs.put(crb_deliver.id, tst.payload);
-          quicktest.add(tst.payload);
-          LOG.info("{} received crb delivery." + "ID: " + crb_deliver.id + " Message: " + tst.payload, logPrefix);
-          if(tst.payload.substring(tst.payload.length()-1).equals("5")) {
-              for (String key : msgs.keySet()) {
-                  String msg = msgs.get(key);
-                  LOG.info("{} ID: " + key + " Message: " + msg, logPrefix);
-              }
-              LOG.info("{} ___ ----- ____ ----- ___", logPrefix);
-              for (String message : quicktest) {
-                  LOG.info("{}  " + message, logPrefix);
-              }
-          }
-
-          /*
           BroadcastMessage broadcastMessage = (BroadcastMessage) crb_deliver.payload;
           KompicsEvent payload = broadcastMessage.payload;
-
-
-         if (crb_deliver.src.equals(selfAdr)) {
-             LOG.info("{} Received a message from myself", logPrefix);
-             return;
-          } else {
-             LOG.info("{} Did not receive a message from myself", logPrefix);
-         }
 
           if (payload instanceof Patch) {
               LOG.info("{} Received a patch from: " + crb_deliver.src + " " + crb_deliver.id + " " + logPrefix);
               logoot.patch((Patch) payload);
           } else if (payload instanceof Undo) {
               LOG.info("{} Received a undo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
-              //LOG.info("{} Document Before : ");
-              //logoot.printDocument();
               logoot.undo((Undo) payload);
           } else if (payload instanceof Redo) {
               LOG.info("{} Received a redo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
               logoot.redo((Redo) payload);
           }
           LOG.info("{} Document after", logPrefix);
-          logoot.printDocument();*/
+          logoot.printDocument();
       }
   };
 

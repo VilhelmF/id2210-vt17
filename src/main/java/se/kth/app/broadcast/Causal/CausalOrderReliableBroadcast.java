@@ -48,43 +48,31 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
     protected final Handler<CRB_Broadcast> crbBroadcastHandler = new Handler<CRB_Broadcast>() {
         @Override
         public void handle(CRB_Broadcast crb_broadcast) {
-            LOG.info("{} received the following message: " + crb_broadcast.payload, logPrefix);
-            HashMap<String, Past> pastCopy = new HashMap<>(past);
-            trigger(new RB_Broadcast(crb_broadcast.id, selfAdr, new CausalData(pastCopy, crb_broadcast.payload)), rb);
-            past.put(crb_broadcast.id, new Past((BroadcastMessage) crb_broadcast.payload, crb_broadcast.src));
-            //BroadcastMessage test = (BroadcastMessage) past.get(crb_broadcast.id);
-            //LOG.info("{} " + test.message, logPrefix);
+            trigger(new RB_Broadcast(crb_broadcast.id, crb_broadcast.src, new CausalData(new HashMap<>(past), crb_broadcast.payload)), rb);
+            past.put(crb_broadcast.id, new Past((BroadcastMessage) crb_broadcast.payload, selfAdr));
         }
     };
 
     protected final Handler<RB_Deliver> rbDeliverHandler = new Handler<RB_Deliver>() {
         @Override
         public void handle(RB_Deliver rb_deliver) {
-            LOG.info(("{} Delivery reached the causal order broadcast!" + " " + rb_deliver.id), logPrefix);
             CausalData data = (CausalData) rb_deliver.payload;
             if (!delivered.contains(data.payload)) {
                 for (String key : data.past.keySet()) {
                     Past pastObject = data.past.get(key);
-                    BroadcastMessage broadcastMessage = pastObject.message;
-                    if (!delivered.contains(broadcastMessage)) {
-                        trigger(new CRB_Deliver(key, pastObject.src, broadcastMessage), crb);
-                        LOG.info("{} Delivery triggered from past!: " + key + " Src : " + pastObject.src, logPrefix);
-                        delivered.add(broadcastMessage);
+                    if (!delivered.contains(pastObject.message)) {
+                        trigger(new CRB_Deliver(key, pastObject.src, pastObject.message), crb);
+                        delivered.add(pastObject.message);
                         if (!past.containsKey(key)) {
                             past.put(key, pastObject);
                         }
-                    } else {
-                        LOG.info("Bruuh: " + pastObject.src);
                     }
                 }
-                LOG.info("{} Delivery triggered from current message :" + rb_deliver.id, logPrefix);
                 trigger(new CRB_Deliver(rb_deliver.id, rb_deliver.src, data.payload), crb);
                 delivered.add(data.payload);
                 if (!past.containsKey(rb_deliver.id)) {
                     past.put(rb_deliver.id, new Past((BroadcastMessage) data.payload, rb_deliver.src));
                 }
-            } else {
-                LOG.info("{} Contains the broadcast message!", logPrefix);
             }
         }
     };

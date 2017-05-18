@@ -29,8 +29,9 @@ public class GBEB_Broadcast implements KompicsEvent, Serializable {
 
         if (src != null ? !src.equals(that.src) : that.src != null) return false;
         if (payload != null ? !payload.equals(that.payload) : that.payload != null) return false;
-        return id != null ? id.equals(that.id) : that.id == null;
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
 
+        return true;
     }
 
     @Override

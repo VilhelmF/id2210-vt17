@@ -29,6 +29,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     final static Logger LOG = LoggerFactory.getLogger(GossipingBestEffortBroadcast.class);
     private String logPrefix = "";
 
+
     //***** Ports *******
     protected final Positive<ReliableBroadcast> rbd = requires(ReliableBroadcast.class);
     protected final Positive<CroupierPort> ps = requires(CroupierPort.class);
@@ -50,29 +51,24 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            //LOG.info("{}Gossiping Broadcast STARTING...", logPrefix);
+            past = new HashMap<>();
         }
     };
 
     protected final Handler<GBEB_Broadcast> broadcastHandler = new Handler<GBEB_Broadcast>() {
         @Override
-        public void handle(GBEB_Broadcast GBEB_broadcast) {
+        public void handle(GBEB_Broadcast message) {
             try {
-                OriginatedData message = (OriginatedData) GBEB_broadcast.payload;
-                CausalData cd = (CausalData) message.payload;
-                BroadcastMessage broadcastMessage = (BroadcastMessage) cd.payload;
-                LOG.info("{} Received the following message: " + GBEB_broadcast.id + " " + broadcastMessage.payload, logPrefix);
-                past.put(GBEB_broadcast.id, GBEB_broadcast.payload);
+                past.put(message.id, message); //TODO ÓVISS
             } catch (Exception e) {
                e.printStackTrace();
             }
         }
     };
 
-    protected final Handler<CroupierMessage> sampleHandler = new Handler<CroupierMessage>() {
+    protected final Handler<CroupierSample> sampleHandler = new Handler<CroupierSample>() {
         @Override
-        public void handle(CroupierMessage croupierMessage) {
-            CroupierSample croupierSample = croupierMessage.croupierSample;
+        public void handle(CroupierSample croupierSample) {
 
             if (croupierSample.publicSample.isEmpty()) {
                 return;
@@ -82,7 +78,6 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
                 KHeader header = new BasicHeader(self, peer, Transport.TCP);
                 KContentMsg msg = new BasicContentMsg(header, new HistoryRequest());
                 trigger(msg, net);
-                //LOG.info("{ } Gossiping component : " + self.getIp() + " sent weird message to " + peer.getIp());
             }
         }
     };
@@ -92,7 +87,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
 
         @Override
         public void handle(HistoryRequest content, KContentMsg<?, ?, HistoryRequest> container) {
-            trigger(container.answer(new HistoryResponse(past)), net);
+            trigger(container.answer(new HistoryResponse(new HashMap<>(past))), net);
         }
     };
 
@@ -101,31 +96,20 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
 
         @Override
         public void handle(HistoryResponse content, KContentMsg<?, ?, HistoryResponse> container) {
-            HashMap<String, KompicsEvent> unseen = difference(content.history, past);
-            //LOG.info("{}Size of unseen: " + unseen.size(), logPrefix);
+            HashMap<String, KompicsEvent> unseen = new HashMap<>(content.history);
 
             for (String key : unseen.keySet()) {
-                //LOG.info("{} Delivering message!", logPrefix);
                 try {
-                    OriginatedData data = (OriginatedData) unseen.get(key);
+                    GBEB_Broadcast data = (GBEB_Broadcast) unseen.get(key);
+
                     trigger(new GBEB_Deliver(key, data.src, data.payload), gbeb);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
             past.putAll(unseen);
-            //LOG.info("{ } Gossiping component : " + self.getIp() + " received the history response from "
-            //        + container.getSource());
         }
     };
-
-    public HashMap<String, KompicsEvent> difference(HashMap<String, KompicsEvent> history, HashMap<String, KompicsEvent> past) {
-        HashMap<String, KompicsEvent> unseen = new HashMap<>();
-        unseen.putAll(history);
-        unseen.putAll(past);
-        unseen.keySet().removeAll(past.keySet());
-        return unseen;
-    }
 
     public static class Init extends se.sics.kompics.Init<GossipingBestEffortBroadcast> {
         private HashMap<String, KompicsEvent> past;
@@ -140,7 +124,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
 
     {
         subscribe(broadcastHandler, gbeb);
-        subscribe(sampleHandler, gbeb);
+        subscribe(sampleHandler, ps);
         subscribe(handleHistoryRequest, net);
         subscribe(handleHistoryResponse, net);
         subscribe(handleStart, control);

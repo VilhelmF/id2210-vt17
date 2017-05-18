@@ -107,6 +107,8 @@ public class AppMngrComp extends ComponentDefinition {
     connect(appComp.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);
     connect(appComp.getNegative(CroupierPort.class), extPorts.croupierPort, Channel.TWO_WAY);
 
+    connect(gossipingBestEffortBroadcast.getNegative(CroupierPort.class), extPorts.croupierPort, Channel.TWO_WAY);
+
     // AppComp <----> Gossiping best effort broadcast
     connect(appComp.getNegative(BestEffortBroadcast.class), gossipingBestEffortBroadcast.getPositive(BestEffortBroadcast.class), Channel.TWO_WAY);
     connect(gossipingBestEffortBroadcast.getNegative(Network.class), extPorts.networkPort, Channel.TWO_WAY);

@@ -135,25 +135,30 @@ public class Logoot extends ComponentDefinition {
     }
 
     public void patch(Patch content) {
-        execute(content);
-        content.setDegree(1);
-        historyBuffer.put(content.getId(), content);
+        Patch patch = new Patch(content.getId(), content.getOperations(),content.getDegree());
+        execute(patch);
+        patch.setDegree(1);
+        historyBuffer.put(patch.getId(), patch);
     }
 
     public void undo(Undo content) {
-        Patch patch = historyBuffer.get(content.getPatchID());
+        Patch newPatch = historyBuffer.get(content.getPatchID());
+        Patch patch = new Patch(newPatch.getId(), newPatch.getOperations(),newPatch.getDegree());
         patch.decrementDegree();
+        historyBuffer.put(patch.getId(), patch);
         if (patch.getDegree() == 0) {
             execute(inverse(patch));
         }
     }
 
     public void redo(Redo content) {
-        Patch patch = historyBuffer.get(content.getPatchID());
+        Patch newPatch = historyBuffer.get(content.getPatchID());
+        Patch patch = new Patch(newPatch.getId(), newPatch.getOperations(),newPatch.getDegree());
         patch.incrementDegree();
         if (patch.getDegree() == 1) {
             execute(patch);
         }
+        historyBuffer.put(patch.getId(), patch);
     }
 
     public int prefix(List<Position> positions, int index) {
@@ -169,14 +174,16 @@ public class Logoot extends ComponentDefinition {
 
     public Patch inverse(Patch patch) {
 
-        Patch inversePatch = new Patch(patch.getId(), patch.getOperations(), patch.getDegree());
+        Patch inversePatch = new Patch(patch.getId(), new ArrayList<Operation>(), patch.getDegree());
 
-        for (Operation op : inversePatch.getOperations()) {
+        for (Operation op : patch.getOperations()) {
+            Operation newOp = new Operation(op.getType(), op.getId(), op.getContent());
             if (op.getType().equals(OperationType.INSERT)) {
-                op.setType(OperationType.DELETE);
+                newOp.setType(OperationType.DELETE);
             } else {
-                op.setType(OperationType.INSERT);
+                newOp.setType(OperationType.INSERT);
             }
+            inversePatch.getOperations().add(newOp);
         }
         return inversePatch;
     }

@@ -4,11 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.logoot.Operation.Operation;
 import se.kth.app.logoot.Operation.OperationType;
-import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
-import se.sics.ktoolbox.util.network.KContentMsg;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -212,6 +210,21 @@ public class Logoot extends ComponentDefinition {
     public List<LineIdentifier> getIdentifierTable() {
         return identifierTable;
     }
+
+    public List<LineIdentifier> getLineIdentifier(int startLine, int endLine, int lineCount, Position position) {
+        return generateLineID(identifierTable.get(startLine), identifierTable.get(endLine), lineCount,
+                10, position);
+    }
+
+    public List<LineIdentifier> getFirstLine(int lineCount, Position position) {
+        return getLineIdentifier(0, 1, lineCount, position);
+    }
+
+    public List<LineIdentifier> getLastLine(int lineCount, Position position) {
+        int identifierTableSize = identifierTable.size();
+        return getLineIdentifier(identifierTableSize - 2, identifierTableSize - 1, lineCount, position);
+    }
+
 
 
     public static void main(String[] args) {

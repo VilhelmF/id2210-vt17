@@ -107,24 +107,11 @@ public class AppComp extends ComponentDefinition {
                 String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
                 LOG.info("{} Sendig message:  " + messageId, logPrefix);
                 trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(null)), crb);
+
                 messageCounter++;
             }
-            /*
-            if(messageCounter < 10) {
-                String messageId = selfAdr.toString() + String.valueOf(messageCounter);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(String.valueOf(messageCounter))), crb);
-                LOG.info("{} Senging" + "ID: " + messageId + " Message: " + String.valueOf(messageCounter), logPrefix);
-                messageCounter++;
-            }*/
+
             trigger(new CroupierMessage(croupierSample), gbeb);
-            /*
-            List<KAddress> sample = CroupierHelper.getSample(croupierSample);
-            for (KAddress peer : sample) {
-            KHeader header = new BasicHeader(selfAdr, peer, Transport.UDP);
-            KContentMsg msg = new BasicContentMsg(header, new Ping());
-            trigger(msg, networkPort);
-            }
-            */
     }
   };
 
@@ -145,23 +132,6 @@ public class AppComp extends ComponentDefinition {
           }
 
           logoot.printDocument();
-
-          /* BroadcastMessage tst = (BroadcastMessage) crb_deliver.payload;
-          msgs.put(crb_deliver.id, tst.message);
-          quicktest.add(tst.message);
-          LOG.info("{} received crb delivery." + "ID: " + crb_deliver.id + " Message: " + tst.message, logPrefix);
-          if(tst.message.equals("5")) {
-              for (String key : msgs.keySet()) {
-                  String msg = msgs.get(key);
-                  LOG.info("{} ID: " + key + " Message: " + msg, logPrefix);
-              }
-              LOG.info("{} ___ ----- ____ ----- ___", logPrefix);
-              for (String message : quicktest
-                   ) {
-                 LOG.info("{}  " + message, logPrefix);
-              }
-
-*/
       }
   };
 

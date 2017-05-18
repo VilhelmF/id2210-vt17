@@ -10,10 +10,10 @@ import java.util.HashMap;
  */
 public class CausalData implements KompicsEvent, Serializable {
 
-    public final HashMap<String, KompicsEvent> past;
+    public final HashMap<String, Past> past;
     public final KompicsEvent payload;
 
-    public CausalData(HashMap<String, KompicsEvent> past, KompicsEvent payload) {
+    public CausalData(HashMap<String, Past> past, KompicsEvent payload) {
         this.past = past;
         this.payload = payload;
     }

@@ -133,6 +133,15 @@ public class AppComp extends ComponentDefinition {
                 trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(undo)), crb);
                 logoot.undo(undo);
                 messageCounter++;
+            } else if (messageCounter == 3 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
+                LOG.info("{} sending redo.", logPrefix);
+                Redo redo = new Redo(randomID);
+
+                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
+                LOG.info("{} ID: " + messageId, logPrefix);
+                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(redo)), crb);
+                logoot.redo(redo);
+                messageCounter++;
             }
 
             trigger(new CroupierMessage(croupierSample), gbeb);

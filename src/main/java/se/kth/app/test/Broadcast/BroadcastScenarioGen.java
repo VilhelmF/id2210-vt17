@@ -18,6 +18,8 @@
 package se.kth.app.test.Broadcast;
 
 import se.kth.app.sim.ScenarioSetup;
+import se.kth.app.sim.SimulationResultMap;
+import se.kth.app.sim.SimulationResultSingleton;
 import se.kth.sim.compatibility.SimNodeIdExtractor;
 import se.kth.system.HostMngrComp;
 import se.sics.kompics.network.Address;
@@ -25,6 +27,7 @@ import se.sics.kompics.simulator.SimulationScenario;
 import se.sics.kompics.simulator.adaptor.Operation;
 import se.sics.kompics.simulator.adaptor.Operation1;
 import se.sics.kompics.simulator.adaptor.distributions.extra.BasicIntSequentialDistribution;
+import se.sics.kompics.simulator.events.system.KillNodeEvent;
 import se.sics.kompics.simulator.events.system.SetupEvent;
 import se.sics.kompics.simulator.events.system.StartNodeEvent;
 import se.sics.kompics.simulator.network.identifier.IdentifierExtractor;
@@ -40,6 +43,8 @@ import java.util.Map;
 
 @SuppressWarnings("Duplicates")
 public class BroadcastScenarioGen {
+
+    private static final SimulationResultMap res = SimulationResultSingleton.getInstance();
 
     static Operation<SetupEvent> systemSetupOp = new Operation<SetupEvent>() {
         @Override
@@ -121,6 +126,32 @@ public class BroadcastScenarioGen {
         }
     };
 
+    static Operation1<KillNodeEvent, Integer> killNodeOp = new Operation1<KillNodeEvent, Integer>() {
+
+        @Override
+        public KillNodeEvent generate(final Integer nodeId) {
+            return new KillNodeEvent() {
+                KAddress selfAdr;
+
+                {
+                    String nodeIp = "193.0.0." + nodeId;
+                    selfAdr = ScenarioSetup.getNodeAdr(nodeIp, nodeId);
+                    res.put("corrupt-" + nodeId, "");
+                }
+
+                @Override
+                public Address getNodeAddress() {
+                    return selfAdr;
+                }
+
+                @Override
+                public String toString() {
+                    return "KillNode<" + selfAdr.toString() + ">";
+                }
+            };
+        }
+    };
+
     public static SimulationScenario simpleBoot() {
         SimulationScenario scen = new SimulationScenario() {
             {
@@ -153,7 +184,7 @@ public class BroadcastScenarioGen {
         return scen;
     }
 
-    public static SimulationScenario broadcastTest(final int peers) {
+    public static SimulationScenario basicBroadcastTest(final int peers) {
         SimulationScenario scen = new SimulationScenario() {
             {
                 StochasticProcess systemSetup = new StochasticProcess() {
@@ -179,6 +210,45 @@ public class BroadcastScenarioGen {
                 startBootstrapServer.startAfterTerminationOf(1000, systemSetup);
                 startPeers.startAfterTerminationOf(1000, startBootstrapServer);
                 terminateAfterTerminationOf(1000*1000, startPeers);
+            }
+        };
+
+        return scen;
+    }
+
+    public static SimulationScenario broadcastTestChurn(final int peers, final int destroyPeers) {
+        SimulationScenario scen = new SimulationScenario() {
+            {
+                StochasticProcess systemSetup = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(constant(1000));
+                        raise(1, systemSetupOp);
+                    }
+                };
+                StochasticProcess startBootstrapServer = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(constant(1000));
+                        raise(1, startBootstrapServerOp);
+                    }
+                };
+                StochasticProcess startPeers = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(uniform(1000, 1100));
+                        raise(peers, startNodeOp, new BasicIntSequentialDistribution(1));
+                    }
+                };
+                StochasticProcess killPeers = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(uniform(1000, 1100));
+                        raise(destroyPeers, killNodeOp, new BasicIntSequentialDistribution(1));
+                    }
+                };
+
+                systemSetup.start();
+                startBootstrapServer.startAfterTerminationOf(1000, systemSetup);
+                startPeers.startAfterTerminationOf(1000, startBootstrapServer);
+                killPeers.startAfterTerminationOf(1000, startPeers);
+                terminateAfterTerminationOf(1000*1000, killPeers);
             }
         };
 

@@ -119,7 +119,7 @@ public class ScenarioGen {
         }
     };
 
-    public static SimulationScenario simpleBoot() {
+    public static SimulationScenario simpleBoot(final int peers) {
         SimulationScenario scen = new SimulationScenario() {
             {
                 StochasticProcess systemSetup = new StochasticProcess() {
@@ -137,7 +137,7 @@ public class ScenarioGen {
                 StochasticProcess startPeers = new StochasticProcess() {
                     {
                         eventInterArrivalTime(uniform(1000, 1100));
-                        raise(4, startNodeOp, new BasicIntSequentialDistribution(1));
+                        raise(peers, startNodeOp, new BasicIntSequentialDistribution(1));
                     }
                 };
 

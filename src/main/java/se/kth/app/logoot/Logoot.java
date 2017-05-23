@@ -279,7 +279,9 @@ public class Logoot extends ComponentDefinition {
         return new Patch(id, operations, degree);
     }
 
-
+    public List<String> getDocumentClone() {
+       return new ArrayList<>(this.document);
+    }
 
     public static void main(String[] args) {
         System.out.println("Here we go!");

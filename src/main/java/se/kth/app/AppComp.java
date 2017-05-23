@@ -26,9 +26,10 @@ import se.kth.app.broadcast.Causal.CRB_Broadcast;
 import se.kth.app.broadcast.Causal.CRB_Deliver;
 import se.kth.app.broadcast.Causal.CausalBroadcast;
 import se.kth.app.logoot.*;
+import se.kth.app.sim.SimulationResultMap;
+import se.kth.app.sim.SimulationResultSingleton;
 import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
-import se.kth.networking.CroupierMessage;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
@@ -66,6 +67,7 @@ public class AppComp extends ComponentDefinition {
   private ArrayList<String> quicktest;
   private Logoot logoot;
   private int randomID;
+  private SimulationResultMap res = SimulationResultSingleton.getInstance();
   public int messagesReceived = 0;
 
   public AppComp(Init init) {
@@ -155,6 +157,7 @@ public class AppComp extends ComponentDefinition {
           }
           LOG.info("{} Document after", logPrefix);
           logoot.printDocument();
+          res.put(selfAdr.getId().toString(), logoot.getDocumentClone());
       }
   };
 

@@ -51,7 +51,7 @@ public class CausalOrderReliableBroadcast extends ComponentDefinition {
     protected final Handler<CRB_Broadcast> crbBroadcastHandler = new Handler<CRB_Broadcast>() {
         @Override
         public void handle(CRB_Broadcast crb_broadcast) {
-            trigger(new RB_Broadcast(crb_broadcast.id, crb_broadcast.src, new CausalData(new ArrayList<>(past), crb_broadcast.payload)), rb);
+            trigger(new RB_Broadcast(crb_broadcast.src, new CausalData(new ArrayList<>(past), crb_broadcast.payload)), rb);
             past.add(new Past((BroadcastMessage) crb_broadcast.payload, selfAdr));
         }
     };

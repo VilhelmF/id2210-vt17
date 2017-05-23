@@ -17,7 +17,6 @@
  */
 package se.kth.app;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
@@ -30,7 +29,6 @@ import se.kth.app.logoot.Operation.Operation;
 import se.kth.app.logoot.Operation.OperationType;
 import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
-import se.kth.networking.CroupierMessage;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
@@ -113,27 +111,21 @@ public class AppComp extends ComponentDefinition {
                 }
                 Patch patch = new Patch(randomID, operations, 1);
 
-                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-                LOG.info("{} Sending message:  " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(patch)), crb);
+                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(patch)), crb);
 
                 messageCounter++;
             } else if (messageCounter == 2 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
                 LOG.info("{} sending undo.", logPrefix);
                 Undo undo = new Undo(randomID);
 
-                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-                LOG.info("{} ID: " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(undo)), crb);
+                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(undo)), crb);
                 messageCounter++;
 
             } else if (messageCounter == 3 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
                 LOG.info("{} sending redo.", logPrefix);
                 Redo redo = new Redo(randomID);
 
-                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-                LOG.info("{} ID: " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(messageId, selfAdr, new BroadcastMessage(redo)), crb);
+                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(redo)), crb);
 
                 messageCounter++;
             }

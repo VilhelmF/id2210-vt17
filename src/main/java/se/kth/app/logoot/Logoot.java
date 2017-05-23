@@ -98,7 +98,7 @@ public class Logoot extends ComponentDefinition {
                 s = site.getId();
                 c = site.getClock() + 1;
             }
-            id.addPosition(new Position(d, s, c)); //TODO
+            id.addPosition(new Position(d, s, c));
         }
 
         return id;
@@ -230,6 +230,10 @@ public class Logoot extends ComponentDefinition {
         return identifierTable;
     }
 
+    public LineIdentifier getIdentifier(int index) {
+        return this.identifierTable.get(index);
+    }
+
     public List<LineIdentifier> getLineIdentifier(int startLine, int endLine, int lineCount, Site site) {
         return generateLineID(identifierTable.get(startLine), identifierTable.get(endLine), lineCount,
                 10, site);
@@ -244,7 +248,7 @@ public class Logoot extends ComponentDefinition {
         return getLineIdentifier(identifierTableSize - 2, identifierTableSize - 1, lineCount, site);
     }
 
-    public List<Operation> createOperations(List<LineIdentifier> lineIdentifiers, List<String> text) {
+    public List<Operation> createOperations(OperationType type, List<LineIdentifier> lineIdentifiers, List<String> text) {
         if (lineIdentifiers.size() != text.size()) {
             LOG.info("Logoot: Line identifiers are not equal to lines of text.");
             return null;
@@ -252,7 +256,7 @@ public class Logoot extends ComponentDefinition {
         List<Operation> operations = new ArrayList<>();
         int textIndex = 0;
         for (LineIdentifier li : lineIdentifiers) {
-            operations.add(new Operation(OperationType.INSERT, li, text.get(textIndex)));
+            operations.add(new Operation(type, li, text.get(textIndex)));
             textIndex++;
         }
         return operations;
@@ -262,7 +266,8 @@ public class Logoot extends ComponentDefinition {
         return new Patch(id, operations, degree);
     }
 
-    public Patch createPatch(int id, int line, int lineCount, List<String> text, Site site, int degree) {
+    public Patch createPatch(int id, int line, int lineCount, List<String> text, Site site, int degree,
+                             OperationType type) {
         List<LineIdentifier> lineIdentifiers;
         if (line == 1) {
            lineIdentifiers = getFirstLine(lineCount, site);
@@ -271,16 +276,25 @@ public class Logoot extends ComponentDefinition {
         } else {
             lineIdentifiers = getLineIdentifier(line, line + lineCount, lineCount, site);
         }
-        return createPatch(id, lineIdentifiers, text, degree);
+        return createPatch(id, lineIdentifiers, text, degree, type);
     }
 
-    public Patch createPatch(int id, List<LineIdentifier> lineIdentifiers, List<String> text, int degree) {
-        List<Operation> operations = createOperations(lineIdentifiers, text);
+    public Patch createPatch(int id, List<LineIdentifier> lineIdentifiers, List<String> text, int degree,
+                             OperationType type) {
+        List<Operation> operations = createOperations(type,lineIdentifiers, text);
         return new Patch(id, operations, degree);
     }
 
     public List<String> getDocumentClone() {
        return new ArrayList<>(this.document);
+    }
+
+    public int getDocumentSize() {
+        return this.document.size();
+    }
+
+    public String getDocumentLine(int index) {
+        return this.document.get(index);
     }
 
     public static void main(String[] args) {

@@ -21,6 +21,7 @@ public class LogootTest {
 
     @Test
     public void correctOrderTest() {
+        res.put("TestCase", "correctOrderTest");
         long seed = 123;
         SimulationScenario.setSeed(seed);
         SimulationScenario simpleBootScenario = ScenarioGen.simpleBoot(NUM_PEERS);
@@ -30,6 +31,19 @@ public class LogootTest {
             List compareDoc = res.get(String.valueOf(i), List.class);
             Assert.assertTrue(baseDoc.equals(compareDoc));
         }
+    }
 
+    @Test
+    public void removeTest() {
+        res.put("TestCase", "removeTest");
+        long seed = 123;
+        SimulationScenario.setSeed(seed);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleBoot(NUM_PEERS);
+        simpleBootScenario.simulate(LauncherComp.class);
+        List baseDoc = res.get("1", List.class);
+        for(int i = 2; i <= NUM_PEERS; i++) {
+            List compareDoc = res.get(String.valueOf(i), List.class);
+            Assert.assertEquals(baseDoc, compareDoc);
+        }
     }
 }

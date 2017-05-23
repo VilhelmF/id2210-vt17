@@ -26,6 +26,8 @@ import se.kth.app.broadcast.Causal.CRB_Broadcast;
 import se.kth.app.broadcast.Causal.CRB_Deliver;
 import se.kth.app.broadcast.Causal.CausalBroadcast;
 import se.kth.app.logoot.*;
+import se.kth.app.logoot.Operation.Operation;
+import se.kth.app.logoot.Operation.OperationType;
 import se.kth.app.sim.SimulationResultMap;
 import se.kth.app.sim.SimulationResultSingleton;
 import se.kth.app.test.Ping;
@@ -44,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Alex Ormenisan <aaor@kth.se>
@@ -67,8 +70,11 @@ public class AppComp extends ComponentDefinition {
   private ArrayList<String> quicktest;
   private Logoot logoot;
   private int randomID;
+  private String selfId;
   private SimulationResultMap res = SimulationResultSingleton.getInstance();
+  private String testcase;
   public int messagesReceived = 0;
+  private int timestamp;
 
   public AppComp(Init init) {
     selfAdr = init.selfAdr;
@@ -77,7 +83,10 @@ public class AppComp extends ComponentDefinition {
     logPrefix = "<nid:" + selfAdr.getId() + ">";
     LOG.info("{}initiating...", logPrefix);
 
+    selfId = selfAdr.getId().toString();
     messageCounter = 1;
+    timestamp = 0;
+    testcase = res.get("TestCase", String.class);
     msgs = new HashMap<>();
     quicktest = new ArrayList<>();
     subscribe(handleStart, control);
@@ -99,42 +108,17 @@ public class AppComp extends ComponentDefinition {
         @Override
         public void handle(CroupierSample croupierSample) {
 
-            if(messageCounter == 1) {
-
-                int vectorClock = 0;
-                List<LineIdentifier> lineIdentifiers = logoot.getFirstLine(1, new Site(selfAdr.getId().hashCode(), vectorClock));
-
-                randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
-                LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
-                List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending message!"));
-                Patch patch = logoot.createPatch(randomID, 1, text.size(), text, new Site(selfAdr.getId().hashCode(), vectorClock), 1);
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
-                messageCounter++;
-            } else if (messageCounter == 2 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
-                LOG.info("{} sending undo.", logPrefix);
-                Undo undo = new Undo(randomID);
-
-                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-                LOG.info("{} ID: " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, undo)), crb);
-                messageCounter++;
-            } else if (messageCounter == 2 && !selfAdr.toString().equals("193.0.0.1:12345<1>")) {
-                LOG.info("HELLO HELLO");
-                int vectorClock = 0;
-                randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
-                List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending second message!"));
-                Patch patch = logoot.createPatch(randomID, Integer.MAX_VALUE, text.size(), text, new Site(selfAdr.getId().hashCode(), vectorClock), 1);
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
-                messageCounter++;
+            switch(testcase) {
+                case "correctOrderTest":
+                    correctOrderTest();
+                    break;
+                case "removeTest":
+                    removeTest();
+                    break;
+                default:
+                    break;
             }
-            else if (messageCounter == 3 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
-                LOG.info("{} sending redo.", logPrefix);
-                Redo redo = new Redo(randomID);
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, redo)), crb);
-                messageCounter++;
-            }
-
-    }
+        }
   };
 
   Handler handleCRBDeliver = new Handler<CRB_Deliver>() {
@@ -144,6 +128,7 @@ public class AppComp extends ComponentDefinition {
 
           BroadcastMessage broadcastMessage = (BroadcastMessage) crb_deliver.payload;
           KompicsEvent payload = broadcastMessage.payload;
+          timestamp++;
 
           if (payload instanceof Patch) {
               LOG.info("{} Received a patch from: " + crb_deliver.src, logPrefix);
@@ -160,6 +145,7 @@ public class AppComp extends ComponentDefinition {
           res.put(selfAdr.getId().toString(), logoot.getDocumentClone());
       }
   };
+
 
   ClassMatchedHandler handlePing
     = new ClassMatchedHandler<Ping, KContentMsg<?, ?, Ping>>() {
@@ -179,6 +165,71 @@ public class AppComp extends ComponentDefinition {
         LOG.info("{}received pong from:{}", logPrefix, container.getHeader().getSource());
       }
     };
+
+    private void correctOrderTest() {
+        if(messageCounter == 1) {
+            randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
+            LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
+            List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending message!"));
+            Patch patch = logoot.createPatch(randomID, 1, text.size(), text, new Site(selfAdr.getId().hashCode(),
+                    timestamp), 1, OperationType.INSERT);
+            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
+            timestamp++;
+            messageCounter++;
+        } else if (messageCounter == 2 && selfId.equals("1")) {
+            LOG.info("{} sending undo.", logPrefix);
+            Undo undo = new Undo(randomID);
+            String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
+            LOG.info("{} ID: " + messageId, logPrefix);
+            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, undo)), crb);
+            messageCounter++;
+            timestamp++;
+        } else if (messageCounter == 2 && !selfId.equals("1")) {
+            LOG.info("HELLO HELLO");
+            randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
+            List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending second message!"));
+            Patch patch = logoot.createPatch(randomID, Integer.MAX_VALUE, text.size(), text,
+                    new Site(selfAdr.getId().hashCode(), timestamp), 1, OperationType.INSERT);
+            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
+            messageCounter++;
+            timestamp++;
+        }
+        else if (messageCounter == 3 && selfId.equals("1")) {
+            LOG.info("{} sending redo.", logPrefix);
+            Redo redo = new Redo(randomID);
+            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, redo)), crb);
+            messageCounter++;
+            timestamp++;
+        } else if (messageCounter == 4 && selfAdr.getId().toString().equals("1")) {
+            messageCounter++;
+            timestamp++;
+        }
+    }
+
+    private void removeTest() {
+        if(messageCounter == 1) {
+            randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
+            LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
+            List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending message!"));
+            Patch patch = logoot.createPatch(randomID, 1, text.size(), text, new Site(selfAdr.getId().hashCode(),
+                    timestamp), 1, OperationType.INSERT);
+            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
+            timestamp++;
+            messageCounter++;
+        } else if (messageCounter == 2 && logoot.getDocumentSize() > 1) {
+            int lineIndex = ThreadLocalRandom.current().nextInt(0, logoot.getDocumentSize() - 1);
+            String text = logoot.getDocumentLine(lineIndex);
+            LineIdentifier lineIdentifier = logoot.getIdentifier(lineIndex+1);
+            Operation op = new Operation(OperationType.DELETE, lineIdentifier, text);
+            List<Operation> operations = new ArrayList<>();
+            operations.add(op);
+            randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
+            Patch patch = new Patch(randomID, operations, 1);
+            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
+            timestamp++;
+            messageCounter++;
+        }
+    }
 
   public static class Init extends se.sics.kompics.Init<AppComp> {
 

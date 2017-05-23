@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.kth.app;
+package se.kth.app.test.Broadcast;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -28,9 +28,10 @@ import se.kth.app.broadcast.Causal.CausalBroadcast;
 import se.kth.app.logoot.*;
 import se.kth.app.logoot.Operation.Operation;
 import se.kth.app.logoot.Operation.OperationType;
+import se.kth.app.sim.SimulationResultMap;
+import se.kth.app.sim.SimulationResultSingleton;
 import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
-import se.kth.networking.CroupierMessage;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
@@ -49,28 +50,26 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
-public class AppComp extends ComponentDefinition {
+@SuppressWarnings("Duplicates")
+public class BroadcastAppComp extends ComponentDefinition {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AppComp.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BroadcastAppComp.class);
   private String logPrefix = " ";
 
   //*******************************CONNECTIONS********************************
-  Positive<Timer> timerPort = requires(Timer.class);
-  Positive<Network> networkPort = requires(Network.class);
   Positive<CroupierPort> croupierPort = requires(CroupierPort.class);
-  Positive<BestEffortBroadcast> gbeb = requires(BestEffortBroadcast.class);
   Positive<CausalBroadcast> crb = requires(CausalBroadcast.class);
   //**************************************************************************
-  private KAddress selfAdr;
 
+  // Simulation Result Map
+  private final SimulationResultMap res = SimulationResultSingleton.getInstance();
+
+  private KAddress selfAdr;
   private int messageCounter;
-  private HashMap<String, String> msgs;
-  private ArrayList<String> quicktest;
   private Logoot logoot;
   private int randomID;
-  public int messagesReceived = 0;
 
-  public AppComp(Init init) {
+  public BroadcastAppComp(Init init) {
     selfAdr = init.selfAdr;
     logoot = init.logoot;
 
@@ -78,12 +77,8 @@ public class AppComp extends ComponentDefinition {
     LOG.info("{}initiating...", logPrefix);
 
     messageCounter = 1;
-    msgs = new HashMap<>();
-    quicktest = new ArrayList<>();
     subscribe(handleStart, control);
     subscribe(handleCroupierSample, croupierPort);
-    subscribe(handlePing, networkPort);
-    subscribe(handlePong, networkPort);
     subscribe(handleCRBDeliver, crb);
   }
 
@@ -101,8 +96,7 @@ public class AppComp extends ComponentDefinition {
 
             if(messageCounter == 1) {
 
-                int vectorClock = 0;
-                List<LineIdentifier> lineIdentifiers = logoot.getFirstLine(1, new Site(selfAdr.getId().hashCode(), vectorClock));
+                List<LineIdentifier> lineIdentifiers = logoot.getFirstLine(1, new Site(selfAdr.getId().hashCode(), 0));
 
                 randomID = ThreadLocalRandom.current().nextInt(0,Integer.MAX_VALUE);
                 LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
@@ -112,32 +106,11 @@ public class AppComp extends ComponentDefinition {
                     operations.add(new Operation(OperationType.INSERT, li, lineText));
                 }
                 Patch patch = new Patch(randomID, operations, 1);
-
-                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-                LOG.info("{} Sending message:  " + messageId, logPrefix);
                 trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
-
-                messageCounter++;
-            } else if (messageCounter == 2 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
-                LOG.info("{} sending undo.", logPrefix);
-                Undo undo = new Undo(randomID);
-
-                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-                LOG.info("{} ID: " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, undo)), crb);
-                messageCounter++;
-
-            } else if (messageCounter == 3 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
-                LOG.info("{} sending redo.", logPrefix);
-                Redo redo = new Redo(randomID);
-
-                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-                LOG.info("{} ID: " + messageId, logPrefix);
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, redo)), crb);
+                res.put("sent-" + selfAdr.getId().toString(), "");
 
                 messageCounter++;
             }
-
     }
   };
 
@@ -146,44 +119,20 @@ public class AppComp extends ComponentDefinition {
       @Override
       public void handle(CRB_Deliver crb_deliver) {
 
-          BroadcastMessage broadcastMessage = (BroadcastMessage) crb_deliver.payload;
-          KompicsEvent payload = broadcastMessage.payload;
 
-          if (payload instanceof Patch) {
-              LOG.info("{} Received a patch from: " + crb_deliver.src, logPrefix);
-              logoot.patch((Patch) payload);
-          } else if (payload instanceof Undo) {
-              LOG.info("{} Received a undo from: " + crb_deliver.src, logPrefix);
-              logoot.undo((Undo) payload);
-          } else if (payload instanceof Redo) {
-              //LOG.info("{} Received a redo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
-              logoot.redo((Redo) payload);
+          BroadcastMessage broadcastMessage = (BroadcastMessage) crb_deliver.payload;
+
+          String num = res.get("received-" + broadcastMessage.src.getId().toString(), String.class);
+
+          if (num == null) {
+              res.put("received-" + broadcastMessage.src.getId().toString(), "1");
+          } else {
+              res.put("received-" + broadcastMessage.src.getId().toString(), Integer.toString(Integer.parseInt(num) + 1));
           }
-          LOG.info("{} Document after", logPrefix);
-          logoot.printDocument();
       }
   };
 
-  ClassMatchedHandler handlePing
-    = new ClassMatchedHandler<Ping, KContentMsg<?, ?, Ping>>() {
-
-      @Override
-      public void handle(Ping content, KContentMsg<?, ?, Ping> container) {
-        LOG.info("{}received ping from:{}", logPrefix, container.getHeader().getSource());
-        trigger(container.answer(new Pong()), networkPort);
-      }
-    };
-
-  ClassMatchedHandler handlePong
-    = new ClassMatchedHandler<Pong, KContentMsg<?, KHeader<?>, Pong>>() {
-
-      @Override
-      public void handle(Pong content, KContentMsg<?, KHeader<?>, Pong> container) {
-        LOG.info("{}received pong from:{}", logPrefix, container.getHeader().getSource());
-      }
-    };
-
-  public static class Init extends se.sics.kompics.Init<AppComp> {
+  public static class Init extends se.sics.kompics.Init<BroadcastAppComp> {
 
     public final KAddress selfAdr;
     public final Identifier gradientOId;

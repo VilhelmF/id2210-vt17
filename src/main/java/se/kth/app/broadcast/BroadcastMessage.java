@@ -1,6 +1,7 @@
 package se.kth.app.broadcast;
 
 import se.sics.kompics.KompicsEvent;
+import se.sics.ktoolbox.util.network.KAddress;
 
 import java.io.Serializable;
 
@@ -11,9 +12,11 @@ public class BroadcastMessage implements KompicsEvent, Serializable {
 
     private static final long serialVersionUID = -5669431156447202367L;
 
+    public final KAddress src;
     public final KompicsEvent payload;
 
-    public BroadcastMessage(KompicsEvent payload) {
+    public BroadcastMessage(KAddress src, KompicsEvent payload) {
+        this.src = src;
         this.payload = payload;
     }
 
@@ -24,12 +27,15 @@ public class BroadcastMessage implements KompicsEvent, Serializable {
 
         BroadcastMessage that = (BroadcastMessage) o;
 
+        if (src != null ? !src.equals(that.src) : that.src != null) return false;
         return payload != null ? payload.equals(that.payload) : that.payload == null;
 
     }
 
     @Override
     public int hashCode() {
-        return payload != null ? payload.hashCode() : 0;
+        int result = src != null ? src.hashCode() : 0;
+        result = 31 * result + (payload != null ? payload.hashCode() : 0);
+        return result;
     }
 }

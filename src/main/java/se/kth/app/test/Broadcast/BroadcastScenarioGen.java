@@ -15,8 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package se.kth.app.sim;
+package se.kth.app.test.Broadcast;
 
+import se.kth.app.sim.ScenarioSetup;
 import se.kth.sim.compatibility.SimNodeIdExtractor;
 import se.kth.system.HostMngrComp;
 import se.sics.kompics.network.Address;
@@ -36,8 +37,9 @@ import java.util.Map;
 /**
  * @author Alex Ormenisan <aaor@kth.se>
  */
+
 @SuppressWarnings("Duplicates")
-public class ScenarioGen {
+public class BroadcastScenarioGen {
 
     static Operation<SetupEvent> systemSetupOp = new Operation<SetupEvent>() {
         @Override
@@ -99,12 +101,12 @@ public class ScenarioGen {
 
                 @Override
                 public Class getComponentDefinition() {
-                    return HostMngrComp.class;
+                    return BroadcastHostMngrComp.class;
                 }
 
                 @Override
-                public HostMngrComp.Init getComponentInit() {
-                    return new HostMngrComp.Init(selfAdr, ScenarioSetup.bootstrapServer, ScenarioSetup.croupierOId);
+                public BroadcastHostMngrComp.Init getComponentInit() {
+                    return new BroadcastHostMngrComp.Init(selfAdr, ScenarioSetup.bootstrapServer, ScenarioSetup.croupierOId);
                 }
 
                 @Override
@@ -150,4 +152,38 @@ public class ScenarioGen {
 
         return scen;
     }
+
+    public static SimulationScenario broadcastTest(final int peers) {
+        SimulationScenario scen = new SimulationScenario() {
+            {
+                StochasticProcess systemSetup = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(constant(1000));
+                        raise(1, systemSetupOp);
+                    }
+                };
+                StochasticProcess startBootstrapServer = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(constant(1000));
+                        raise(1, startBootstrapServerOp);
+                    }
+                };
+                StochasticProcess startPeers = new StochasticProcess() {
+                    {
+                        eventInterArrivalTime(uniform(1000, 1100));
+                        raise(peers, startNodeOp, new BasicIntSequentialDistribution(1));
+                    }
+                };
+
+                systemSetup.start();
+                startBootstrapServer.startAfterTerminationOf(1000, systemSetup);
+                startPeers.startAfterTerminationOf(1000, startBootstrapServer);
+                terminateAfterTerminationOf(1000*1000, startPeers);
+            }
+        };
+
+        return scen;
+    }
+
+
 }

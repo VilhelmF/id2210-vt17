@@ -17,6 +17,7 @@
  */
 package se.kth.app;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
@@ -27,6 +28,7 @@ import se.kth.app.broadcast.Causal.CausalBroadcast;
 import se.kth.app.logoot.*;
 import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
+import se.kth.networking.CroupierMessage;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
@@ -104,13 +106,15 @@ public class AppComp extends ComponentDefinition {
                 LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
                 List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending message!"));
                 Patch patch = logoot.createPatch(randomID, 1, text.size(), text, new Site(selfAdr.getId().hashCode(), vectorClock), 1);
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(patch)), crb);
+                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
                 messageCounter++;
             } else if (messageCounter == 2 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
                 LOG.info("{} sending undo.", logPrefix);
                 Undo undo = new Undo(randomID);
 
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(undo)), crb);
+                String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
+                LOG.info("{} ID: " + messageId, logPrefix);
+                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, undo)), crb);
                 messageCounter++;
             } else if (messageCounter == 2 && !selfAdr.toString().equals("193.0.0.1:12345<1>")) {
                 LOG.info("HELLO HELLO");
@@ -118,13 +122,13 @@ public class AppComp extends ComponentDefinition {
                 randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
                 List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending second message!"));
                 Patch patch = logoot.createPatch(randomID, Integer.MAX_VALUE, text.size(), text, new Site(selfAdr.getId().hashCode(), vectorClock), 1);
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(patch)), crb);
+                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
                 messageCounter++;
             }
             else if (messageCounter == 3 && selfAdr.toString().equals("193.0.0.1:12345<1>")) {
                 LOG.info("{} sending redo.", logPrefix);
                 Redo redo = new Redo(randomID);
-                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(redo)), crb);
+                trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, redo)), crb);
                 messageCounter++;
             }
 
@@ -146,7 +150,7 @@ public class AppComp extends ComponentDefinition {
               LOG.info("{} Received a undo from: " + crb_deliver.src, logPrefix);
               logoot.undo((Undo) payload);
           } else if (payload instanceof Redo) {
-              LOG.info("{} Received a redo from: " + crb_deliver.src, logPrefix);
+              //LOG.info("{} Received a redo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
               logoot.redo((Redo) payload);
           }
           LOG.info("{} Document after", logPrefix);

@@ -139,8 +139,6 @@ public class Logoot extends ComponentDefinition {
         patch.setDegree(1);
         execute(patch);
         historyBuffer.put(patch.getId(), patch);
-
-
     }
 
     public void undo(Undo content) {
@@ -161,7 +159,6 @@ public class Logoot extends ComponentDefinition {
             execute(patch);
         }
         historyBuffer.put(patch.getId(), patch);
-
     }
 
     public int prefix(List<Position> positions, int index) {
@@ -245,6 +242,41 @@ public class Logoot extends ComponentDefinition {
     public List<LineIdentifier> getLastLine(int lineCount, Site site) {
         int identifierTableSize = identifierTable.size();
         return getLineIdentifier(identifierTableSize - 2, identifierTableSize - 1, lineCount, site);
+    }
+
+    public List<Operation> createOperations(List<LineIdentifier> lineIdentifiers, List<String> text) {
+        if (lineIdentifiers.size() != text.size()) {
+            LOG.info("Logoot: Line identifiers are not equal to lines of text.");
+            return null;
+        }
+        List<Operation> operations = new ArrayList<>();
+        int textIndex = 0;
+        for (LineIdentifier li : lineIdentifiers) {
+            operations.add(new Operation(OperationType.INSERT, li, text.get(textIndex)));
+            textIndex++;
+        }
+        return operations;
+    }
+
+    public Patch createPatch(int id, List<Operation> operations, int degree) {
+        return new Patch(id, operations, degree);
+    }
+
+    public Patch createPatch(int id, int line, int lineCount, List<String> text, Site site, int degree) {
+        List<LineIdentifier> lineIdentifiers;
+        if (line == 1) {
+           lineIdentifiers = getFirstLine(lineCount, site);
+        } else if (line == Integer.MAX_VALUE) {
+            lineIdentifiers = getLastLine(lineCount, site);
+        } else {
+            lineIdentifiers = getLineIdentifier(line, line + lineCount, lineCount, site);
+        }
+        return createPatch(id, lineIdentifiers, text, degree);
+    }
+
+    public Patch createPatch(int id, List<LineIdentifier> lineIdentifiers, List<String> text, int degree) {
+        List<Operation> operations = createOperations(lineIdentifiers, text);
+        return new Patch(id, operations, degree);
     }
 
 

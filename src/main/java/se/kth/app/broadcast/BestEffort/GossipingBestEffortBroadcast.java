@@ -2,11 +2,8 @@ package se.kth.app.broadcast.BestEffort;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.app.broadcast.BroadcastMessage;
-import se.kth.app.broadcast.Causal.CausalData;
 import se.kth.app.broadcast.Reliable.ReliableBroadcast;
 import se.kth.croupier.util.CroupierHelper;
-import se.kth.networking.CroupierMessage;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.network.Transport;
@@ -19,7 +16,6 @@ import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -103,7 +99,6 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
 
             for (OriginatedData obj : unseen) {
                 try {
-
                     trigger(new GBEB_Deliver(obj.src, obj.payload), gbeb);
                 } catch (Exception e) {
                     e.printStackTrace();

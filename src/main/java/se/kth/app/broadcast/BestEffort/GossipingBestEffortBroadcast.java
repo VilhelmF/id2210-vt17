@@ -18,6 +18,7 @@ import se.sics.ktoolbox.util.network.KHeader;
 import se.sics.ktoolbox.util.network.basic.BasicContentMsg;
 import se.sics.ktoolbox.util.network.basic.BasicHeader;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -37,7 +38,8 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     protected final Negative<BestEffortBroadcast> gbeb = provides(BestEffortBroadcast.class);
 
     //***** Fields *******
-    private HashMap<String, KompicsEvent> past;
+    //private HashMap<String, KompicsEvent> past;
+    private List<OriginatedData> past;
     private KAddress self;
 
 
@@ -51,7 +53,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
     Handler handleStart = new Handler<Start>() {
         @Override
         public void handle(Start event) {
-            past = new HashMap<>();
+
         }
     };
 
@@ -59,7 +61,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
         @Override
         public void handle(GBEB_Broadcast message) {
             try {
-                past.put(message.id, message); //TODO ÓVISS
+                past.add(new OriginatedData(self, message.payload));
             } catch (Exception e) {
                e.printStackTrace();
             }
@@ -87,7 +89,7 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
 
         @Override
         public void handle(HistoryRequest content, KContentMsg<?, ?, HistoryRequest> container) {
-            trigger(container.answer(new HistoryResponse(new HashMap<>(past))), net);
+            trigger(container.answer(new HistoryResponse(new ArrayList<>(past))), net);
         }
     };
 
@@ -96,28 +98,28 @@ public class GossipingBestEffortBroadcast extends ComponentDefinition {
 
         @Override
         public void handle(HistoryResponse content, KContentMsg<?, ?, HistoryResponse> container) {
-            HashMap<String, KompicsEvent> unseen = new HashMap<>(content.history);
+            List<OriginatedData> unseen = new ArrayList<>(content.history);
+            unseen.removeAll(past);
 
-            for (String key : unseen.keySet()) {
+            for (OriginatedData obj : unseen) {
                 try {
-                    GBEB_Broadcast data = (GBEB_Broadcast) unseen.get(key);
 
-                    trigger(new GBEB_Deliver(key, data.src, data.payload), gbeb);
+                    trigger(new GBEB_Deliver(obj.src, obj.payload), gbeb);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            past.putAll(unseen);
+            past.addAll(unseen);
         }
     };
 
     public static class Init extends se.sics.kompics.Init<GossipingBestEffortBroadcast> {
-        private HashMap<String, KompicsEvent> past;
+        private List<OriginatedData> past;
         private KAddress self;
 
         public Init(KAddress address) {
             this.self = address;
-            this.past = new HashMap<>();
+            this.past = new ArrayList<>();
         }
 
     }

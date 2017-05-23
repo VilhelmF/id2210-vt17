@@ -47,7 +47,7 @@ public class EagerReliableBroadcast extends ComponentDefinition {
 
         @Override
         public void handle(RB_Broadcast broadcastMessage) {
-            trigger(new GBEB_Broadcast(broadcastMessage.id, selfAdr, broadcastMessage.payload), gbeb);
+            trigger(new GBEB_Broadcast(selfAdr, broadcastMessage.payload), gbeb);
         }
     };
 
@@ -56,8 +56,8 @@ public class EagerReliableBroadcast extends ComponentDefinition {
         public void handle(GBEB_Deliver data) {
             if (!delivered.contains(data.payload)) {
                 delivered.add(data.payload);
-                trigger(new RB_Deliver(data.id, data.src, data.payload), rb);
-                trigger(new GBEB_Broadcast(data.id, data.src, data.payload), gbeb);
+                trigger(new RB_Deliver(data.src, data.payload), rb);
+                trigger(new GBEB_Broadcast(data.src, data.payload), gbeb);
             }
         }
     };

@@ -150,13 +150,13 @@ public class AppComp extends ComponentDefinition {
           KompicsEvent payload = broadcastMessage.payload;
 
           if (payload instanceof Patch) {
-              LOG.info("{} Received a patch from: " + crb_deliver.src + " " + crb_deliver.id + " " + logPrefix);
+              LOG.info("{} Received a patch from: " + crb_deliver.src, logPrefix);
               logoot.patch((Patch) payload);
           } else if (payload instanceof Undo) {
-              LOG.info("{} Received a undo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
+              LOG.info("{} Received a undo from: " + crb_deliver.src, logPrefix);
               logoot.undo((Undo) payload);
           } else if (payload instanceof Redo) {
-              LOG.info("{} Received a redo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
+              LOG.info("{} Received a redo from: " + crb_deliver.src, logPrefix);
               logoot.redo((Redo) payload);
           }
           LOG.info("{} Document after", logPrefix);

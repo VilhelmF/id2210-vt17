@@ -34,10 +34,15 @@ import se.kth.app.test.Broadcast.BroadcastScenarioGen;
 import se.sics.kompics.simulator.SimulationScenario;
 import se.sics.kompics.simulator.run.LauncherComp;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  * @author Lars Kroll <lkroll@kth.se>
  */
+
+@SuppressWarnings("Duplicates")
 public class BroadcastTest {
 
     private static final int NUM_PEERS = 10;
@@ -49,15 +54,75 @@ public class BroadcastTest {
     public void basicBroadcastTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = BroadcastScenarioGen.broadcastTest(NUM_PEERS);
+        SimulationScenario simpleBootScenario = BroadcastScenarioGen.basicBroadcastTest(NUM_PEERS);
         simpleBootScenario.simulate(LauncherComp.class);
 
         for (int i = 1; i <= NUM_PEERS; i++) {
-            if (res.get("sent-" + i, String.class) != null) {
-                LOG.info("received-" + i + "= " + res.get("received-" + i, String.class));
-                Assert.assertEquals(Integer.toString(NUM_PEERS), res.get("received-" + i, String.class));
+            for (int j = 1; j <= NUM_PEERS; j++) {
+                Assert.assertEquals("1", res.get("peer" + j + "-receivedFrom" + i, String.class));
+            }
+        }
+    }
+
+    @Test
+    public void broadcastTestAllCorrectDeliverFromCorrectNode() {
+        long seed = 123;
+        SimulationScenario.setSeed(seed);
+        SimulationScenario simpleBootScenario = BroadcastScenarioGen.broadcastTestChurn(NUM_PEERS, NUM_PEERS / 5);
+        simpleBootScenario.simulate(LauncherComp.class);
+
+        List<Integer> corruptNodes = new ArrayList<>();
+
+
+        for (int i = 1; i <= NUM_PEERS; i++) {
+            if (res.get("corrupt-" + i, String.class) != null) {
+                corruptNodes.add(i);
+            }
+        }
+
+        for (int i = 1; i <= NUM_PEERS; i++) {
+            if (!corruptNodes.contains(i)) {
+                if (res.get("sent-" + i, String.class) != null) {
+                    for (int j = 1; j <= NUM_PEERS; j++) {
+                        if (!corruptNodes.contains(j))
+                        Assert.assertEquals(Integer.toString(1), res.get("peer" + j + "-receivedFrom" + i, String.class));
+                    }
+                }
+                //LOG.info("received-" + i + "= " + res.get("received-" + i, String.class));
+                //Assert.assertEquals(Integer.toString(NUM_PEERS), res.get("received-" + i, String.class));
             } else {
-                LOG.info("HUH");
+                LOG.info("CORRUPT : received-" + i + "= " + res.get("received-" + i, String.class));
+            }
+        }
+    }
+
+    @Test
+    public void broadcastTestOneCorrectDeliversAllCorrectDeliver() {
+        long seed = 123;
+        SimulationScenario.setSeed(seed);
+        SimulationScenario simpleBootScenario = BroadcastScenarioGen.broadcastTestChurn(NUM_PEERS, NUM_PEERS / 5);
+        simpleBootScenario.simulate(LauncherComp.class);
+
+        List<Integer> corruptNodes = new ArrayList<>();
+        List<Integer> correctNodes = new ArrayList<>();
+
+        for (int i = 1; i <= NUM_PEERS; i++) {
+            if (res.get("corrupt-" + i, String.class) != null) {
+                corruptNodes.add(i);
+            } else {
+                correctNodes.add(i);
+            }
+        }
+
+        for (Integer i : corruptNodes) {
+            if (res.get("sent-" + i, String.class) != null) {
+                for (Integer j : correctNodes) {
+                    if (res.get("peer" + j + "-receivedFrom" + i, String.class) != null) {
+                        for (Integer k : correctNodes) {
+                            Assert.assertEquals(Integer.toString(1), res.get("peer" + k + "-receivedFrom" + i, String.class));
+                        }
+                    }
+                }
             }
         }
     }

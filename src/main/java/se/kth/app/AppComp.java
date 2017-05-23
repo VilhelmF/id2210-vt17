@@ -17,10 +17,8 @@
  */
 package se.kth.app;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.app.broadcast.BestEffort.BestEffortBroadcast;
 import se.kth.app.broadcast.BroadcastMessage;
 import se.kth.app.broadcast.Causal.CRB_Broadcast;
 import se.kth.app.broadcast.Causal.CRB_Deliver;
@@ -34,6 +32,9 @@ import se.kth.app.test.Ping;
 import se.kth.app.test.Pong;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
+import se.sics.kompics.timer.CancelPeriodicTimeout;
+import se.sics.kompics.timer.SchedulePeriodicTimeout;
+import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
@@ -42,10 +43,7 @@ import se.sics.ktoolbox.util.network.KAddress;
 import se.sics.ktoolbox.util.network.KContentMsg;
 import se.sics.ktoolbox.util.network.KHeader;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -60,7 +58,6 @@ public class AppComp extends ComponentDefinition {
   Positive<Timer> timerPort = requires(Timer.class);
   Positive<Network> networkPort = requires(Network.class);
   Positive<CroupierPort> croupierPort = requires(CroupierPort.class);
-  Positive<BestEffortBroadcast> gbeb = requires(BestEffortBroadcast.class);
   Positive<CausalBroadcast> crb = requires(CausalBroadcast.class);
   //**************************************************************************
   private KAddress selfAdr;
@@ -73,8 +70,10 @@ public class AppComp extends ComponentDefinition {
   private String selfId;
   private SimulationResultMap res = SimulationResultSingleton.getInstance();
   private String testcase;
+  private UUID timerId;
   public int messagesReceived = 0;
   private int timestamp;
+
 
   public AppComp(Init init) {
     selfAdr = init.selfAdr;
@@ -94,6 +93,13 @@ public class AppComp extends ComponentDefinition {
     subscribe(handlePing, networkPort);
     subscribe(handlePong, networkPort);
     subscribe(handleCRBDeliver, crb);
+    subscribe(timeoutHandler, timerPort);
+
+    SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(0,10);
+    TestTimeout timeout = new TestTimeout(spt);
+    spt.setTimeoutEvent(timeout);
+    trigger(spt, timerPort);
+    timerId = timeout.getTimeoutId();
   }
 
   Handler handleStart = new Handler<Start>() {
@@ -103,6 +109,28 @@ public class AppComp extends ComponentDefinition {
     }
   };
 
+  @Override
+  public void tearDown() {
+      trigger(new CancelPeriodicTimeout(timerId), timerPort);
+  }
+
+
+  Handler timeoutHandler = new Handler<TestTimeout>() {
+
+      @Override
+      public void handle(TestTimeout tt) {
+          switch(testcase) {
+              case "correctOrderTest":
+                  correctOrderTest();
+                  break;
+              case "removeTest":
+                  removeTest();
+                  break;
+              default:
+                  break;
+          }
+      }
+  };
 
   Handler handleCroupierSample = new Handler<CroupierSample>() {
         @Override
@@ -118,6 +146,7 @@ public class AppComp extends ComponentDefinition {
                 default:
                     break;
             }
+
         }
   };
 
@@ -131,17 +160,17 @@ public class AppComp extends ComponentDefinition {
           timestamp++;
 
           if (payload instanceof Patch) {
-              LOG.info("{} Received a patch from: " + crb_deliver.src, logPrefix);
+              //LOG.info("{} Received a patch from: " + crb_deliver.src, logPrefix);
               logoot.patch((Patch) payload);
           } else if (payload instanceof Undo) {
-              LOG.info("{} Received a undo from: " + crb_deliver.src, logPrefix);
+              //LOG.info("{} Received a undo from: " + crb_deliver.src, logPrefix);
               logoot.undo((Undo) payload);
           } else if (payload instanceof Redo) {
               //LOG.info("{} Received a redo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
               logoot.redo((Redo) payload);
           }
-          LOG.info("{} Document after", logPrefix);
-          logoot.printDocument();
+          //LOG.info("{} Document after", logPrefix);
+          //logoot.printDocument();
           res.put(selfAdr.getId().toString(), logoot.getDocumentClone());
       }
   };
@@ -176,16 +205,12 @@ public class AppComp extends ComponentDefinition {
             trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
             timestamp++;
             messageCounter++;
-        } else if (messageCounter == 2 && selfId.equals("1")) {
-            LOG.info("{} sending undo.", logPrefix);
+        } else if (messageCounter == 2 && selfId.contains("1")) {
             Undo undo = new Undo(randomID);
-            String messageId = DigestUtils.sha1Hex(selfAdr.toString() + new java.util.Date() + messageCounter);
-            LOG.info("{} ID: " + messageId, logPrefix);
             trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, undo)), crb);
             messageCounter++;
             timestamp++;
-        } else if (messageCounter == 2 && !selfId.equals("1")) {
-            LOG.info("HELLO HELLO");
+        } else if (messageCounter == 2 && !selfId.contains("1")) {
             randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
             List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending second message!"));
             Patch patch = logoot.createPatch(randomID, Integer.MAX_VALUE, text.size(), text,
@@ -228,6 +253,12 @@ public class AppComp extends ComponentDefinition {
             trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
             timestamp++;
             messageCounter++;
+        }
+    }
+
+    public static class TestTimeout extends Timeout {
+        public TestTimeout(SchedulePeriodicTimeout spt) {
+            super(spt);
         }
     }
 

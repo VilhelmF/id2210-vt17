@@ -27,6 +27,10 @@ public class LogootTest {
         SimulationScenario simpleBootScenario = ScenarioGen.simpleBoot(NUM_PEERS);
         simpleBootScenario.simulate(LauncherComp.class);
         List baseDoc = res.get("1", List.class);
+        for (Object i : baseDoc) {
+            System.out.println(i);
+        }
+        Assert.assertEquals(2*NUM_PEERS-3, baseDoc.size());
         for(int i = 2; i <= NUM_PEERS; i++) {
             List compareDoc = res.get(String.valueOf(i), List.class);
             Assert.assertTrue(baseDoc.equals(compareDoc));

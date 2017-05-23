@@ -124,12 +124,12 @@ public class BroadcastAppComp extends ComponentDefinition {
 
           res.put("receivedFrom" + broadcastMessage.src.getId().toString(), "");
 
-          String num = res.get("peer" + selfAdr.getId().toString() + "-receivedFrom" + broadcastMessage.src.getId().toString(), String.class);
+          String num = res.get("peer-" + selfAdr.getId().toString() + "-receivedFrom-" + broadcastMessage.src.getId().toString(), String.class);
 
           if (num == null) {
-              res.put("peer" + selfAdr.getId().toString() + "-receivedFrom" + broadcastMessage.src.getId().toString(), "1");
+              res.put("peer-" + selfAdr.getId().toString() + "-receivedFrom-" + broadcastMessage.src.getId().toString(), "1");
           } else {
-              res.put("peer" + selfAdr.getId().toString() + "-receivedFrom" + broadcastMessage.src.getId().toString(), Integer.toString(Integer.parseInt(num) + 1));
+              res.put("peer-" + selfAdr.getId().toString() + "-receivedFrom-" + broadcastMessage.src.getId().toString(), Integer.toString(Integer.parseInt(num) + 1));
           }
       }
   };

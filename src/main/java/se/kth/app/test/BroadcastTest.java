@@ -27,7 +27,6 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.app.sim.ScenarioGen;
 import se.kth.app.sim.SimulationResultMap;
 import se.kth.app.sim.SimulationResultSingleton;
 import se.kth.app.test.Broadcast.BroadcastScenarioGen;
@@ -59,7 +58,7 @@ public class BroadcastTest {
 
         for (int i = 1; i <= NUM_PEERS; i++) {
             for (int j = 1; j <= NUM_PEERS; j++) {
-                Assert.assertEquals("1", res.get("peer" + j + "-receivedFrom" + i, String.class));
+                Assert.assertEquals("1", res.get("peer-" + j + "-receivedFrom-" + i, String.class));
             }
         }
     }
@@ -85,7 +84,7 @@ public class BroadcastTest {
                 if (res.get("sent-" + i, String.class) != null) {
                     for (int j = 1; j <= NUM_PEERS; j++) {
                         if (!corruptNodes.contains(j))
-                        Assert.assertEquals(Integer.toString(1), res.get("peer" + j + "-receivedFrom" + i, String.class));
+                        Assert.assertEquals(Integer.toString(1), res.get("peer-" + j + "-receivedFrom-" + i, String.class));
                     }
                 }
                 //LOG.info("received-" + i + "= " + res.get("received-" + i, String.class));
@@ -117,9 +116,9 @@ public class BroadcastTest {
         for (Integer i : corruptNodes) {
             if (res.get("sent-" + i, String.class) != null) {
                 for (Integer j : correctNodes) {
-                    if (res.get("peer" + j + "-receivedFrom" + i, String.class) != null) {
+                    if (res.get("peer-" + j + "-receivedFrom-" + i, String.class) != null) {
                         for (Integer k : correctNodes) {
-                            Assert.assertEquals(Integer.toString(1), res.get("peer" + k + "-receivedFrom" + i, String.class));
+                            Assert.assertEquals(Integer.toString(1), res.get("peer-" + k + "-receivedFrom-" + i, String.class));
                         }
                     }
                 }

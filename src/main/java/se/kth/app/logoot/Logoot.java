@@ -59,19 +59,17 @@ public class Logoot extends ComponentDefinition {
         List<LineIdentifier> identifiers = new ArrayList<>();
 
         int index = 0;
-
         int interval = 0;
 
         while (interval < N) {
             index++;
             interval = prefix(q.getPositions(), index) - prefix(p.getPositions(), index) - 1;
         }
-        LOG.info("INTERVAL: " + interval);
-
+        //LOG.info("INTERVAL: " + interval);
         int step = Math.min(interval/N, boundary);
-        LOG.info("STEP: " + step);
+        //LOG.info("STEP: " + step);
         int r = prefix(p.getPositions(), index);
-        LOG.info("R: " + r);
+        //LOG.info("R: " + r);
 
         for (int i = 1; i <= N; i++) {
             identifiers.add(constructID(r + ThreadLocalRandom.current().nextInt(1, step + 1), p, q, site));
@@ -88,13 +86,11 @@ public class Logoot extends ComponentDefinition {
         int s, d, c;
 
         String str = Integer.toString(r);
-        LOG.info("STR: " + str);
+        //LOG.info("STR: " + str);
 
-        //for (int i = 0; i < str.length(); i++) {
-        for(int i = 0; i < r; i++) {
-            d = r;
-            //d = Integer.parseInt(str.substring(i, i + 1));
-            LOG.info("d: " + d);
+        for(int i = 0; i < str.length(); i++) {
+            d = Integer.parseInt(str.substring(i));
+            //LOG.info("d: " + d);
             if (p.getPositions().size() > i && d == p.getPositions().get(i).getDigit()) {
                 s = p.getPositions().get(i).getSiteID();
                 c = p.getPositions().get(i).getClockValue();

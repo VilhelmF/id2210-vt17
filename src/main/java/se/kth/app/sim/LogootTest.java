@@ -25,8 +25,10 @@ public class LogootTest {
         res.put(TESTKEY, "causalOrderTest");
         runSimulation();
         List baseDoc = res.get("1", List.class);
-        for (Object s : baseDoc) {
-            System.out.println("Value: " + s);
+        Assert.assertEquals(NUM_PEERS, baseDoc.size());
+        for(int i = 1; i <= NUM_PEERS; i++) {
+            //The lines should be ordered with values from 1 - NUM_PEERS
+            Assert.assertEquals(String.valueOf(i), baseDoc.get(i-1));
         }
     }
 

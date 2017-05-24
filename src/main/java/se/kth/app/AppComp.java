@@ -177,7 +177,6 @@ public class AppComp extends ComponentDefinition {
 
   private void causalOrderTest() {
 
-      //if(String.valueOf(messagesReceived + 1).equals(selfId) && messageCounter == 1) {
       if(selfId.equals(String.valueOf(logoot.getDocumentClone().size() + 1)) && messageCounter == 1) {
           LOG.info("{} Sending my message now.", logPrefix);
           randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();

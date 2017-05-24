@@ -83,6 +83,7 @@ public class AppComp extends ComponentDefinition {
         testcase = res.get("TestCase", String.class);
         msgs = new HashMap<>();
         quicktest = new ArrayList<>();
+
         subscribe(handleStart, control);
         subscribe(handleCroupierSample, croupierPort);
         subscribe(handleCRBDeliver, crb);
@@ -152,26 +153,43 @@ public class AppComp extends ComponentDefinition {
 
           BroadcastMessage broadcastMessage = (BroadcastMessage) crb_deliver.payload;
           KompicsEvent payload = broadcastMessage.payload;
-          timestamp++;
+          if(selfId.equals("1")) {
+              LOG.info("{} Received message from: " + broadcastMessage.src);
+              logoot.printDocument();
+          }
 
           if (payload instanceof Patch) {
-              //LOG.info("{} Received a patch from: " + crb_deliver.src, logPrefix);
               logoot.patch((Patch) payload);
           } else if (payload instanceof Undo) {
-              //LOG.info("{} Received a undo from: " + crb_deliver.src, logPrefix);
               logoot.undo((Undo) payload);
           } else if (payload instanceof Redo) {
-              //LOG.info("{} Received a redo from: " + crb_deliver.src + " " + crb_deliver.id, logPrefix);
               logoot.redo((Redo) payload);
           }
-          //LOG.info("{} Document after", logPrefix);
-          //logoot.printDocument();
-          res.put(selfAdr.getId().toString(), logoot.getDocumentClone());
+          res.put(selfId, logoot.getDocumentClone());
+          messagesReceived++;
+          timestamp++;
+          if(selfId.equals("1")) {
+              LOG.info("After patching.");
+              logoot.printDocument();
+          }
       }
   };
 
   private void causalOrderTest() {
-      LOG.info("I feel it coming.");
+
+      //if(String.valueOf(messagesReceived + 1).equals(selfId) && messageCounter == 1) {
+      if(selfId.equals(String.valueOf(logoot.getDocumentClone().size() + 1)) && messageCounter == 1) {
+          LOG.info("{} Sending my message now.", logPrefix);
+          randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
+          List<String> text = new ArrayList<>(Arrays.asList(selfId));
+          int line = Integer.MAX_VALUE;
+          if(selfId.equals("1")) line = 1;
+          Patch patch = logoot.createPatch(randomID, line, text.size(), text, new Site(selfAdr.getId().hashCode(),
+                  timestamp), 1, OperationType.INSERT);
+          trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
+          timestamp++;
+          messageCounter++;
+      }
   }
 
   private void correctOrderTest() {

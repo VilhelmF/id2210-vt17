@@ -39,8 +39,8 @@ public class Logoot extends ComponentDefinition {
         //Inserting <0,NA,NA> and <MAX,NA,NA> to mark beginning and end of document
         LineIdentifier min = new LineIdentifier();
         LineIdentifier max = new LineIdentifier();
-        min.addPosition(new Position(0,-1, -1));
-        max.addPosition(new Position(BASE - 1, -1, -1));
+        min.addPosition(new Position(0,0, 0));
+        max.addPosition(new Position(BASE - 1, 0, 0));
         identifierTable.add(min);
         identifierTable.add(max);
     }
@@ -66,9 +66,12 @@ public class Logoot extends ComponentDefinition {
             index++;
             interval = prefix(q.getPositions(), index) - prefix(p.getPositions(), index) - 1;
         }
+        LOG.info("INTERVAL: " + interval);
 
         int step = Math.min(interval/N, boundary);
+        LOG.info("STEP: " + step);
         int r = prefix(p.getPositions(), index);
+        LOG.info("R: " + r);
 
         for (int i = 1; i <= N; i++) {
             identifiers.add(constructID(r + ThreadLocalRandom.current().nextInt(1, step + 1), p, q, site));
@@ -85,9 +88,13 @@ public class Logoot extends ComponentDefinition {
         int s, d, c;
 
         String str = Integer.toString(r);
+        LOG.info("STR: " + str);
 
-        for (int i = 0; i < str.length(); i++) {
-            d = Integer.parseInt(str.substring(i, i + 1));
+        //for (int i = 0; i < str.length(); i++) {
+        for(int i = 0; i < r; i++) {
+            d = r;
+            //d = Integer.parseInt(str.substring(i, i + 1));
+            LOG.info("d: " + d);
             if (p.getPositions().size() > i && d == p.getPositions().get(i).getDigit()) {
                 s = p.getPositions().get(i).getSiteID();
                 c = p.getPositions().get(i).getClockValue();
@@ -297,7 +304,7 @@ public class Logoot extends ComponentDefinition {
         return this.document.get(index);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         System.out.println("Here we go!");
         Logoot logoot = new Logoot();
         int vectorClock = 0;
@@ -337,6 +344,7 @@ public class Logoot extends ComponentDefinition {
         patch = new Patch(2, operations, 1);
         logoot.patch(patch);
         logoot.printDocument();
+        vectorClock++;
 
         lineIdentifiers = new ArrayList<>();
         lineIdentifiers.add(logoot.identifierTable.get(3));
@@ -353,14 +361,47 @@ public class Logoot extends ComponentDefinition {
 
         patch = new Patch(3, operations, 1);
         logoot.patch(patch);
+        vectorClock++;
         LOG.info("REMOVE DONE!!!");
         logoot.printDocument();
 
 
         logoot.undo(new Undo(3));
+        vectorClock++;
         LOG.info("UNDO DONE!!!");
         logoot.printDocument();
 
+
+
+        LOG.info("DAFUQ");
+        lineIdentifiers = new ArrayList<>();
+        LineIdentifier from = logoot.identifierTable.get(22);
+        LineIdentifier to = logoot.identifierTable.get(23);
+        LOG.info("FROM PRINTING POS");
+        System.out.println("FROM: " + from.printPositions());
+        System.out.println("TO: " + to.printPositions());
+        lineIdentifiers = logoot.generateLineID(from,
+                to, 1, 10, new Site(vectorClock, site));
+
+        for( LineIdentifier li : lineIdentifiers) {
+            System.out.println("WTF WTF WTF " + li.printPositions());
+        }
+        LOG.info("Size:" + logoot.getDocumentSize());
+        operations = new ArrayList<>();
+        for (LineIdentifier li : lineIdentifiers) {
+            String lineText = "Back of the line test!!! " + lineNumber;
+            operations.add(new Operation(OperationType.INSERT, li, lineText));
+            lineNumber++;
+        }
+        patch = new Patch(4, operations, 1);
+        logoot.patch(patch);
+        logoot.printDocument();
+
+        int index = 1;
+        for( LineIdentifier li : logoot.identifierTable) {
+            System.out.println(index + " " + li.printPositions());
+            index++;
+        }
     }
 
 }

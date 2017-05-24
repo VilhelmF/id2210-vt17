@@ -24,12 +24,17 @@ public class LogootTest {
     public void causalOrderTest() {
         res.put(TESTKEY, "causalOrderTest");
         runSimulation();
+        List baseDoc = res.get("1", List.class);
+        for (Object s : baseDoc) {
+            System.out.println("Value: " + s);
+        }
     }
 
     @Test
     public void correctOrderTest() {
         res.put(TESTKEY, "correctOrderTest");
         runSimulation();
+
         List baseDoc = res.get("1", List.class);
         for (Object i : baseDoc) {
             System.out.println(i);

@@ -28,8 +28,6 @@ import se.kth.app.logoot.Operation.Operation;
 import se.kth.app.logoot.Operation.OperationType;
 import se.kth.app.sim.SimulationResultMap;
 import se.kth.app.sim.SimulationResultSingleton;
-import se.kth.app.test.Ping;
-import se.kth.app.test.Pong;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
@@ -40,8 +38,6 @@ import se.sics.ktoolbox.croupier.CroupierPort;
 import se.sics.ktoolbox.croupier.event.CroupierSample;
 import se.sics.ktoolbox.util.identifiable.Identifier;
 import se.sics.ktoolbox.util.network.KAddress;
-import se.sics.ktoolbox.util.network.KContentMsg;
-import se.sics.ktoolbox.util.network.KHeader;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -51,68 +47,65 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class AppComp extends ComponentDefinition {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AppComp.class);
-  private String logPrefix = " ";
+    private static final Logger LOG = LoggerFactory.getLogger(AppComp.class);
+    private String logPrefix = " ";
 
-  //*******************************CONNECTIONS********************************
-  Positive<Timer> timerPort = requires(Timer.class);
-  Positive<Network> networkPort = requires(Network.class);
-  Positive<CroupierPort> croupierPort = requires(CroupierPort.class);
-  Positive<CausalBroadcast> crb = requires(CausalBroadcast.class);
-  //**************************************************************************
-  private KAddress selfAdr;
+    //*******************************CONNECTIONS********************************
+    Positive<Timer> timerPort = requires(Timer.class);
+    Positive<Network> networkPort = requires(Network.class);
+    Positive<CroupierPort> croupierPort = requires(CroupierPort.class);
+    Positive<CausalBroadcast> crb = requires(CausalBroadcast.class);
+    //**************************************************************************
+    private KAddress selfAdr;
 
-  private int messageCounter;
-  private HashMap<String, String> msgs;
-  private ArrayList<String> quicktest;
-  private Logoot logoot;
-  private int randomID;
-  private String selfId;
-  private SimulationResultMap res = SimulationResultSingleton.getInstance();
-  private String testcase;
-  private UUID timerId;
-  public int messagesReceived = 0;
-  private int timestamp;
+    private int messageCounter;
+    private HashMap<String, String> msgs;
+    private ArrayList<String> quicktest;
+    private Logoot logoot;
+    private int randomID;
+    private String selfId;
+    private SimulationResultMap res = SimulationResultSingleton.getInstance();
+    private String testcase;
+    private UUID timerId;
+    public int messagesReceived = 0;
+    private int timestamp;
 
+    public AppComp(Init init) {
+        selfAdr = init.selfAdr;
+        logoot = init.logoot;
 
-  public AppComp(Init init) {
-    selfAdr = init.selfAdr;
-    logoot = init.logoot;
+        logPrefix = "<nid:" + selfAdr.getId() + ">";
+        LOG.info("{}initiating...", logPrefix);
 
-    logPrefix = "<nid:" + selfAdr.getId() + ">";
-    LOG.info("{}initiating...", logPrefix);
+        selfId = selfAdr.getId().toString();
+        messageCounter = 1;
+        timestamp = 0;
+        testcase = res.get("TestCase", String.class);
+        msgs = new HashMap<>();
+        quicktest = new ArrayList<>();
+        subscribe(handleStart, control);
+        subscribe(handleCroupierSample, croupierPort);
+        subscribe(handleCRBDeliver, crb);
+        subscribe(timeoutHandler, timerPort);
 
-    selfId = selfAdr.getId().toString();
-    messageCounter = 1;
-    timestamp = 0;
-    testcase = res.get("TestCase", String.class);
-    msgs = new HashMap<>();
-    quicktest = new ArrayList<>();
-    subscribe(handleStart, control);
-    subscribe(handleCroupierSample, croupierPort);
-    subscribe(handlePing, networkPort);
-    subscribe(handlePong, networkPort);
-    subscribe(handleCRBDeliver, crb);
-    subscribe(timeoutHandler, timerPort);
-
-    SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(0,10);
-    TestTimeout timeout = new TestTimeout(spt);
-    spt.setTimeoutEvent(timeout);
-    trigger(spt, timerPort);
-    timerId = timeout.getTimeoutId();
-  }
-
-  Handler handleStart = new Handler<Start>() {
-    @Override
-    public void handle(Start event) {
-      LOG.info("{}starting...", logPrefix);
+        SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(0,10);
+        TestTimeout timeout = new TestTimeout(spt);
+        spt.setTimeoutEvent(timeout);
+        trigger(spt, timerPort);
+        timerId = timeout.getTimeoutId();
     }
-  };
 
-  @Override
-  public void tearDown() {
-      trigger(new CancelPeriodicTimeout(timerId), timerPort);
-  }
+    Handler handleStart = new Handler<Start>() {
+        @Override
+        public void handle(Start event) {
+            LOG.info("{}starting...", logPrefix);
+        }
+    };
+
+    @Override
+    public void tearDown() {
+        trigger(new CancelPeriodicTimeout(timerId), timerPort);
+    }
 
 
   Handler timeoutHandler = new Handler<TestTimeout>() {
@@ -143,10 +136,12 @@ public class AppComp extends ComponentDefinition {
                 case "removeTest":
                     removeTest();
                     break;
+                case "causalOrderTest":
+                    causalOrderTest();
+                    break;
                 default:
                     break;
             }
-
         }
   };
 
@@ -175,92 +170,76 @@ public class AppComp extends ComponentDefinition {
       }
   };
 
+  private void causalOrderTest() {
+      LOG.info("I feel it coming.");
+  }
 
-  ClassMatchedHandler handlePing
-    = new ClassMatchedHandler<Ping, KContentMsg<?, ?, Ping>>() {
+  private void correctOrderTest() {
 
-      @Override
-      public void handle(Ping content, KContentMsg<?, ?, Ping> container) {
-        LOG.info("{}received ping from:{}", logPrefix, container.getHeader().getSource());
-        trigger(container.answer(new Pong()), networkPort);
-      }
-    };
-
-  ClassMatchedHandler handlePong
-    = new ClassMatchedHandler<Pong, KContentMsg<?, KHeader<?>, Pong>>() {
-
-      @Override
-      public void handle(Pong content, KContentMsg<?, KHeader<?>, Pong> container) {
-        LOG.info("{}received pong from:{}", logPrefix, container.getHeader().getSource());
-      }
-    };
-
-    private void correctOrderTest() {
-        if(messageCounter == 1) {
-            randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
-            LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
-            List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending message!"));
-            Patch patch = logoot.createPatch(randomID, 1, text.size(), text, new Site(selfAdr.getId().hashCode(),
-                    timestamp), 1, OperationType.INSERT);
-            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
-            timestamp++;
-            messageCounter++;
-        } else if (messageCounter == 2 && selfId.contains("1")) {
-            Undo undo = new Undo(randomID);
-            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, undo)), crb);
-            messageCounter++;
-            timestamp++;
-        } else if (messageCounter == 2 && !selfId.contains("1")) {
-            randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
-            List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending second message!"));
-            Patch patch = logoot.createPatch(randomID, Integer.MAX_VALUE, text.size(), text,
+      if(messageCounter == 1) {
+          randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
+          List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending message!"));
+          Patch patch = logoot.createPatch(randomID, 1, text.size(), text, new Site(selfAdr.getId().hashCode(),
+                  timestamp), 1, OperationType.INSERT);
+          trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
+          timestamp++;
+          messageCounter++;
+      } else if (messageCounter == 2 && selfId.contains("1")) {
+          Undo undo = new Undo(randomID);
+          trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, undo)), crb);
+          messageCounter++;
+          timestamp++;
+      } else if (messageCounter == 2 && !selfId.contains("1")) {
+          randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
+          List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending second message!"));
+          Patch patch = logoot.createPatch(randomID, Integer.MAX_VALUE, text.size(), text,
                     new Site(selfAdr.getId().hashCode(), timestamp), 1, OperationType.INSERT);
-            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
-            messageCounter++;
-            timestamp++;
-        }
-        else if (messageCounter == 3 && selfId.equals("1")) {
-            LOG.info("{} sending redo.", logPrefix);
-            Redo redo = new Redo(randomID);
-            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, redo)), crb);
-            messageCounter++;
-            timestamp++;
-        } else if (messageCounter == 4 && selfAdr.getId().toString().equals("1")) {
-            messageCounter++;
-            timestamp++;
-        }
-    }
+          trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
+          messageCounter++;
+          timestamp++;
+      } else if (messageCounter == 3 && selfId.equals("1")) {
+          LOG.info("{} sending redo.", logPrefix);
+          Redo redo = new Redo(randomID);
+          trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, redo)), crb);
+          messageCounter++;
+          timestamp++;
+      } else if (messageCounter == 4 && selfAdr.getId().toString().equals("1")) {
+          messageCounter++;
+          timestamp++;
+      }
+  }
 
-    private void removeTest() {
-        if(messageCounter == 1) {
-            randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
-            LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
-            List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending message!"));
-            Patch patch = logoot.createPatch(randomID, 1, text.size(), text, new Site(selfAdr.getId().hashCode(),
-                    timestamp), 1, OperationType.INSERT);
-            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
-            timestamp++;
-            messageCounter++;
-        } else if (messageCounter == 2 && logoot.getDocumentSize() > 1) {
-            int lineIndex = ThreadLocalRandom.current().nextInt(0, logoot.getDocumentSize() - 1);
-            String text = logoot.getDocumentLine(lineIndex);
-            LineIdentifier lineIdentifier = logoot.getIdentifier(lineIndex+1);
-            Operation op = new Operation(OperationType.DELETE, lineIdentifier, text);
-            List<Operation> operations = new ArrayList<>();
-            operations.add(op);
-            randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
-            Patch patch = new Patch(randomID, operations, 1);
-            trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
-            timestamp++;
-            messageCounter++;
-        }
-    }
+  private void removeTest() {
 
-    public static class TestTimeout extends Timeout {
-        public TestTimeout(SchedulePeriodicTimeout spt) {
-            super(spt);
-        }
-    }
+      if(messageCounter == 1) {
+          randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
+          LOG.info("{} " + " randomvalue " + String.valueOf(randomID));
+          List<String> text = new ArrayList<>(Arrays.asList(selfAdr.toString() + " Sending message!"));
+          Patch patch = logoot.createPatch(randomID, 1, text.size(), text, new Site(selfAdr.getId().hashCode(),
+                  timestamp), 1, OperationType.INSERT);
+          trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
+          timestamp++;
+          messageCounter++;
+      } else if (messageCounter == 2 && logoot.getDocumentSize() > 1) {
+          int lineIndex = ThreadLocalRandom.current().nextInt(0, logoot.getDocumentSize() - 1);
+          String text = logoot.getDocumentLine(lineIndex);
+          LineIdentifier lineIdentifier = logoot.getIdentifier(lineIndex+1);
+          Operation op = new Operation(OperationType.DELETE, lineIdentifier, text);
+          List<Operation> operations = new ArrayList<>();
+          operations.add(op);
+          randomID = (selfAdr.toString() + String.valueOf(messageCounter)).hashCode();
+          Patch patch = new Patch(randomID, operations, 1);
+          trigger(new CRB_Broadcast(selfAdr, new BroadcastMessage(selfAdr, patch)), crb);
+          timestamp++;
+          messageCounter++;
+      }
+  }
+
+  public static class TestTimeout extends Timeout {
+      public TestTimeout(SchedulePeriodicTimeout spt) {
+          super(spt);
+      }
+  }
 
   public static class Init extends se.sics.kompics.Init<AppComp> {
 

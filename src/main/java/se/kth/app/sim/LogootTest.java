@@ -16,16 +16,20 @@ import java.util.List;
 public class LogootTest {
 
     private static final int NUM_PEERS = 10;
+    private static final String TESTKEY = "TestCase";
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(LogootTest.class);
 
     @Test
+    public void causalOrderTest() {
+        res.put(TESTKEY, "causalOrderTest");
+        runSimulation();
+    }
+
+    @Test
     public void correctOrderTest() {
-        res.put("TestCase", "correctOrderTest");
-        long seed = 123;
-        SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleBoot(NUM_PEERS);
-        simpleBootScenario.simulate(LauncherComp.class);
+        res.put(TESTKEY, "correctOrderTest");
+        runSimulation();
         List baseDoc = res.get("1", List.class);
         for (Object i : baseDoc) {
             System.out.println(i);
@@ -39,15 +43,19 @@ public class LogootTest {
 
     @Test
     public void removeTest() {
-        res.put("TestCase", "removeTest");
-        long seed = 123;
-        SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleBoot(NUM_PEERS);
-        simpleBootScenario.simulate(LauncherComp.class);
+        res.put(TESTKEY, "removeTest");
+        runSimulation();
         List baseDoc = res.get("1", List.class);
         for(int i = 2; i <= NUM_PEERS; i++) {
             List compareDoc = res.get(String.valueOf(i), List.class);
             Assert.assertEquals(baseDoc, compareDoc);
         }
+    }
+
+    private void runSimulation() {
+        long seed = 123;
+        SimulationScenario.setSeed(seed);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleBoot(NUM_PEERS);
+        simpleBootScenario.simulate(LauncherComp.class);
     }
 }
